@@ -55,6 +55,7 @@ impl DiscreteSpace for ThreeDimensional {
 pub struct DynamicalSystemBuilder<T: DiscreteSpace, U: Dynamic<T>> {
     dimension: Box<T>,
     dynamic: Box<U>,
+    initial_state: Option<Vec<u32>>,
     // states: u32,
     // n_m: Vec<i32>,
     // n_m: Option<(i32, i32)>,
@@ -69,10 +70,16 @@ impl<T: DiscreteSpace, U: Dynamic<T>> DynamicalSystemBuilder<T, U> {
         Self {
             dimension: Box::new(space),
             dynamic: Box::new(dynamic),
+            initial_state: None,
             // states: 2,
             // n_m: vec![1, 1],
             // n_m: None,
         }
+    }
+
+    pub fn with_initial_state(&mut self, state: Vec<u32>) -> &mut Self {
+        self.initial_state = Some(state);
+        self
     }
 
     pub fn build(&self) -> DynamicalSystem<T, U>
@@ -82,13 +89,16 @@ impl<T: DiscreteSpace, U: Dynamic<T>> DynamicalSystemBuilder<T, U> {
     {
         // let mut space = Vec::<Vec<u32>>::new();
 
-        let s: Vec<u32> = self
-            .dimension
-            .size()
-            .iter()
-            .map(|d| vec![0; *d as usize])
-            .flatten()
-            .collect();
+        let s: Vec<u32> = match self.initial_state {
+            Some(ref state) => state.clone(),
+            None => self
+                .dimension
+                .size()
+                .iter()
+                .map(|d| vec![0; *d as usize])
+                .flatten()
+                .collect(),
+        };
 
         DynamicalSystem {
             space: s,
@@ -120,9 +130,17 @@ impl<T: DiscreteSpace, U: Dynamic<T>> DynamicalSystem<T, U> {
     // fn dims() -> dyn DiscreteSystem {}
     // fn dynamic() -> dyn Dynamic;
 
-    // fn space() -> Vec<u64>;
+    pub fn space(&mut self) -> &Vec<u32> {
+        &self.space
+    }
 
-    // fn tick();
+    pub fn system(&mut self) -> &Box<T> {
+        &self.system
+    }
+
+    pub fn tick(&mut self) {
+        self.space = self.dynamic.update(&self.space);
+    }
 }
 
 // pub struct DynamicalSystem {
@@ -133,7 +151,7 @@ impl<T: DiscreteSpace, U: Dynamic<T>> DynamicalSystem<T, U> {
 pub trait Dynamic<T: DiscreteSpace> {
     fn states(&self) -> u32;
 
-    fn update(&self, input: Vec<u32>) -> Vec<u32>;
+    fn update(&self, input: &Vec<u32>) -> Vec<u32>;
 }
 
 #[derive(Debug, Clone)]
@@ -148,7 +166,7 @@ impl Dynamic<OneDimensional> for ElementaryCellularAutomaton<OneDimensional> {
         2
     }
 
-    fn update(&self, input: Vec<u32>) -> Vec<u32> {
+    fn update(&self, input: &Vec<u32>) -> Vec<u32> {
         let mut output: Vec<u32> = Vec::new();
 
         for i in 0..input.len() {
@@ -181,5 +199,15 @@ impl ElementaryCellularAutomaton<OneDimensional> {
             rule,
             phantom: PhantomData,
         }
+    }
+
+    pub fn new_from_number(rule: u32) -> Self {
+        let mut rule_array = [0; 8];
+
+        for i in 0..8 {
+            rule_array[i] = (rule >> i) & 1;
+        }
+
+        Self::new(rule_array)
     }
 }

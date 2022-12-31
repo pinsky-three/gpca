@@ -1,16 +1,22 @@
 use ds::DynamicalSystemBuilder;
-use gpca::{model, update, view};
+// use gpca::{model, update, view};
 
 mod ds;
 
 fn main() {
-    let ca = DynamicalSystemBuilder::new(
-        ds::OneDimensional(100),
-        ds::ElementaryCellularAutomaton::new([0, 1, 0, 1, 0, 1, 1, 1]),
+    let mut ca = DynamicalSystemBuilder::new(
+        ds::OneDimensional(10),
+        ds::ElementaryCellularAutomaton::new_from_number(30),
     )
+    .with_initial_state(vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 0])
     .build();
 
-    println!("{:?}", ca);
+    for _ in 0..10 {
+        println!("{:?}", ca.space());
+        ca.tick();
+    }
 
-    nannou::app(model).update(update).simple_window(view).run();
+    // println!("{:?}", ca.space());
+
+    // nannou::app(model).update(update).simple_window(view).run();
 }
