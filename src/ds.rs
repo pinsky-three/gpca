@@ -6,7 +6,6 @@ use crate::space::DiscreteSpace;
 pub struct DynamicalSystemBuilder<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> {
     dimension: Box<T>,
     dynamic: Box<U>,
-    initial_state: Option<Vec<u32>>,
 }
 
 impl<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> DynamicalSystemBuilder<D, T, U> {
@@ -18,7 +17,6 @@ impl<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> DynamicalSystemBuild
         Self {
             dimension: Box::new(space),
             dynamic: Box::new(dynamic),
-            initial_state: None,
         }
     }
 
@@ -27,24 +25,10 @@ impl<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> DynamicalSystemBuild
         T: Clone,
         U: Clone,
     {
-        // let mut space = Vec::<Vec<u32>>::new();
-
-        let s: Vec<u32> = match self.initial_state {
-            Some(ref state) => state.clone(),
-            None => self
-                .dimension
-                .size()
-                .iter()
-                .map(|d| vec![0; *d as usize])
-                .flatten()
-                .collect(),
-        };
-
         DynamicalSystem {
             // space: s,
             space: self.dimension.clone(),
             dynamic: self.dynamic.clone(),
-            // dynamic: Box::new(self.dynamic.unwrap()),
         }
     }
 }
@@ -78,9 +62,8 @@ impl<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> DynamicalSystem<D, T
     }
 
     pub fn tick(&mut self) {
-        &self
-            .space
-            .write_state(&self.dynamic.update(&self.space.read_state()));
+        self.space
+            .write_state(&self.dynamic.update(&self.space.read_state()))
     }
 }
 

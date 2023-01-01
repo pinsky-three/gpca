@@ -7,8 +7,6 @@ pub enum Dimension {
 
 #[derive(Debug, Clone, Copy)]
 pub struct OneDimensional<const X: usize> {
-    // size: [usize; 1],
-    // phantom: PhantomData<X>,
     space: [u32; X],
 }
 
@@ -20,18 +18,25 @@ impl<const X: usize> OneDimensional<X> {
     pub fn new_with_state(state: [u32; X]) -> Self {
         Self { space: state }
     }
+
+    // pub fn new_from_vec(state: Vec<u32>) -> Self {
+    //     let mut space = [0; X];
+
+    //     for i in 0..state.len() {
+    //         space[i] = state[i];
+    //     }
+
+    //     Self { space }
+    // }
 }
+
 #[derive(Debug, Clone, Copy)]
 pub struct TwoDimensional<const X: usize, const Y: usize> {
-    // size: [usize; 2],
-    // phantom: PhantomData<(X, Y)>,
     space: [[u32; X]; Y],
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct ThreeDimensional<const X: usize, const Y: usize, const Z: usize> {
-    // size: [usize; 3],
-    // phantom: PhantomData<(X, Y, Z)>,
     space: [[[u32; X]; Y]; Z],
 }
 
