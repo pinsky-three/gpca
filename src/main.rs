@@ -8,7 +8,7 @@ fn main() {
         ds::OneDimensional(10),
         ds::ElementaryCellularAutomaton::new_from_number(30),
     )
-    .with_initial_state(vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 0])
+    .with_initial_state(vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0])
     .build();
 
     for _ in 0..10 {

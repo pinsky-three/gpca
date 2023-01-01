@@ -16,64 +16,65 @@ pub struct TwoDimensional(pub u32, pub u32);
 #[derive(Debug, Clone, Copy)]
 pub struct ThreeDimensional(pub u32, pub u32, pub u32);
 
-pub trait DiscreteSpace {
+pub trait DiscreteSpace<const S: usize> {
     fn dim(&self) -> Dimension;
-    fn size(&self) -> Vec<u32>;
+    fn size(&self) -> [usize; S];
 }
 
-impl DiscreteSpace for OneDimensional {
+impl DiscreteSpace<1> for OneDimensional {
     fn dim(&self) -> Dimension {
         Dimension::One
     }
 
-    fn size(&self) -> Vec<u32> {
+    fn size(&self) -> [usize; 1] {
         vec![self.0]
     }
 }
 
-impl DiscreteSpace for TwoDimensional {
+impl DiscreteSpace<2> for TwoDimensional {
     fn dim(&self) -> Dimension {
         Dimension::Two
     }
 
-    fn size(&self) -> Vec<u32> {
+    fn size(&self) -> [usize; 2] {
         vec![self.0, self.1]
     }
 }
 
-impl DiscreteSpace for ThreeDimensional {
+impl DiscreteSpace<3> for ThreeDimensional {
     fn dim(&self) -> Dimension {
         Dimension::Three
     }
 
-    fn size(&self) -> Vec<u32> {
+    fn size(&self) -> [usize; 3] {
         vec![self.0, self.1, self.2]
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct DynamicalSystemBuilder<T: DiscreteSpace, U: Dynamic<T>> {
+pub struct DynamicalSystemBuilder<const S: usize, T: DiscreteSpace<S>, U: Dynamic<S, T>> {
     dimension: Box<T>,
     dynamic: Box<U>,
     initial_state: Option<Vec<u32>>,
+    size: Vec<u32>,
     // states: u32,
     // n_m: Vec<i32>,
     // n_m: Option<(i32, i32)>,
 }
 
-impl<T: DiscreteSpace, U: Dynamic<T>> DynamicalSystemBuilder<T, U> {
+impl<const S: usize, T: DiscreteSpace<S>, U: Dynamic<S, T>> DynamicalSystemBuilder<S, T, U> {
     pub fn new(space: T, dynamic: U) -> Self
     where
-        T: DiscreteSpace,
-        U: Dynamic<T>,
+        T: DiscreteSpace<S>,
+        U: Dynamic<S, T>,
     {
+        let s = space.size();
+
         Self {
             dimension: Box::new(space),
             dynamic: Box::new(dynamic),
             initial_state: None,
-            // states: 2,
-            // n_m: vec![1, 1],
-            // n_m: None,
+            size: s,
         }
     }
 
@@ -82,7 +83,7 @@ impl<T: DiscreteSpace, U: Dynamic<T>> DynamicalSystemBuilder<T, U> {
         self
     }
 
-    pub fn build(&self) -> DynamicalSystem<T, U>
+    pub fn build(&self) -> DynamicalSystem<S, T, U>
     where
         T: Clone,
         U: Clone,
@@ -110,7 +111,7 @@ impl<T: DiscreteSpace, U: Dynamic<T>> DynamicalSystemBuilder<T, U> {
 }
 
 #[derive(Debug, Clone)]
-pub struct DynamicalSystem<T: DiscreteSpace, U: Dynamic<T>> {
+pub struct DynamicalSystem<const S: usize, T: DiscreteSpace<S>, U: Dynamic<S, T>> {
     space: Vec<u32>,
     system: Box<T>,
     dynamic: Box<U>,
@@ -119,7 +120,7 @@ pub struct DynamicalSystem<T: DiscreteSpace, U: Dynamic<T>> {
     // fn update();
 }
 
-impl<T: DiscreteSpace, U: Dynamic<T>> DynamicalSystem<T, U> {
+impl<const S: usize, T: DiscreteSpace<S>, U: Dynamic<S, T>> DynamicalSystem<S, T, U> {
     // pub fn new<T>(builder: DynamicalSystemBuilder<T>) -> Self
     // where
     //     T: DiscreteSystem,
@@ -148,20 +149,22 @@ impl<T: DiscreteSpace, U: Dynamic<T>> DynamicalSystem<T, U> {
 //     n_m: Option<(i32, i32)>,
 // }
 
-pub trait Dynamic<T: DiscreteSpace> {
+pub trait Dynamic<const S: usize, T: DiscreteSpace<S>> {
     fn states(&self) -> u32;
 
     fn update(&self, input: &Vec<u32>) -> Vec<u32>;
 }
 
 #[derive(Debug, Clone)]
-pub struct ElementaryCellularAutomaton<T: DiscreteSpace> {
+pub struct ElementaryCellularAutomaton<const S: usize, T: DiscreteSpace<S>> {
     rule: [u32; 8],
     phantom: PhantomData<T>,
     // dimension: Box<T>,
 }
 
-impl Dynamic<OneDimensional> for ElementaryCellularAutomaton<OneDimensional> {
+impl<const S: usize, OneDimensional> Dynamic<S, dyn DiscreteSpace<S>>
+    for ElementaryCellularAutomaton<S, OneDimensional>
+{
     fn states(&self) -> u32 {
         2
     }
@@ -193,7 +196,7 @@ impl Dynamic<OneDimensional> for ElementaryCellularAutomaton<OneDimensional> {
     }
 }
 
-impl ElementaryCellularAutomaton<OneDimensional> {
+impl<const S: usize> ElementaryCellularAutomaton<S, OneDimensional> {
     pub fn new(rule: [u32; 8]) -> Self {
         Self {
             rule,
