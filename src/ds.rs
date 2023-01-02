@@ -3,16 +3,16 @@ use crate::dynamic::Dynamic;
 use crate::space::DiscreteSpace;
 
 #[derive(Debug, Clone)]
-pub struct DynamicalSystemBuilder<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> {
-    dimension: Box<T>,
-    dynamic: Box<U>,
+pub struct DynamicalSystemBuilder<const D: usize, S: DiscreteSpace<D>, F: Dynamic<D, S>> {
+    dimension: Box<S>,
+    dynamic: Box<F>,
 }
 
-impl<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> DynamicalSystemBuilder<D, T, U> {
-    pub fn new(space: T, dynamic: U) -> Self
+impl<const D: usize, S: DiscreteSpace<D>, F: Dynamic<D, S>> DynamicalSystemBuilder<D, S, F> {
+    pub fn new(space: S, dynamic: F) -> Self
     where
-        T: DiscreteSpace<D>,
-        U: Dynamic<D, T>,
+        S: DiscreteSpace<D>,
+        F: Dynamic<D, S>,
     {
         Self {
             dimension: Box::new(space),
@@ -20,10 +20,10 @@ impl<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> DynamicalSystemBuild
         }
     }
 
-    pub fn build(&self) -> DynamicalSystem<D, T, U>
+    pub fn build(&self) -> DynamicalSystem<D, S, F>
     where
-        T: Clone,
-        U: Clone,
+        S: Clone,
+        F: Clone,
     {
         DynamicalSystem {
             // space: s,
@@ -34,15 +34,15 @@ impl<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> DynamicalSystemBuild
 }
 
 #[derive(Debug, Clone)]
-pub struct DynamicalSystem<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> {
-    space: Box<T>,
-    dynamic: Box<U>,
+pub struct DynamicalSystem<const D: usize, S: DiscreteSpace<D>, F: Dynamic<D, S>> {
+    space: Box<S>,
+    dynamic: Box<F>,
     // fn state() -> Vec<u64>;
 
     // fn update();
 }
 
-impl<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> DynamicalSystem<D, T, U> {
+impl<const D: usize, S: DiscreteSpace<D>, F: Dynamic<D, S>> DynamicalSystem<D, S, F> {
     // pub fn new<T>(builder: DynamicalSystemBuilder<T>) -> Self
     // where
     //     T: DiscreteSystem,
@@ -57,7 +57,7 @@ impl<const D: usize, T: DiscreteSpace<D>, U: Dynamic<D, T>> DynamicalSystem<D, T
     //     &self.space
     // }
 
-    pub fn space(&mut self) -> &Box<T> {
+    pub fn space(&mut self) -> &Box<S> {
         &self.space
     }
 
