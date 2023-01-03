@@ -4,7 +4,7 @@ use crate::space::DiscreteSpace;
 
 #[derive(Debug, Clone)]
 pub struct DynamicalSystemBuilder<const D: usize, S: DiscreteSpace<D>, F: Dynamic<D, S>> {
-    dimension: Box<S>,
+    space: Box<S>,
     dynamic: Box<F>,
 }
 
@@ -15,9 +15,14 @@ impl<const D: usize, S: DiscreteSpace<D>, F: Dynamic<D, S>> DynamicalSystemBuild
         F: Dynamic<D, S>,
     {
         Self {
-            dimension: Box::new(space),
+            space: Box::new(space),
             dynamic: Box::new(dynamic),
         }
+    }
+
+    pub fn update_state(&mut self, updater: &dyn Fn(&mut Vec<u32>)) -> &Self {
+        self.space.update_state(updater);
+        self
     }
 
     pub fn build(&self) -> DynamicalSystem<D, S, F>
@@ -27,7 +32,7 @@ impl<const D: usize, S: DiscreteSpace<D>, F: Dynamic<D, S>> DynamicalSystemBuild
     {
         DynamicalSystem {
             // space: s,
-            space: self.dimension.clone(),
+            space: self.space.clone(),
             dynamic: self.dynamic.clone(),
         }
     }

@@ -1,3 +1,16 @@
+pub trait DiscreteSpace<const D: usize> {
+    fn dim(&self) -> Dimension;
+    fn size(&self) -> [usize; D];
+
+    fn read_state(&self) -> Vec<u32>;
+    fn write_state(&mut self, state: &Vec<u32>);
+    fn update_state(&mut self, updater: &dyn Fn(&mut Vec<u32>)) {
+        let mut s = self.read_state();
+        updater(&mut s);
+        self.write_state(&s)
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum Dimension {
     One,
@@ -15,19 +28,17 @@ impl<const X: usize> OneDimensional<X> {
         Self { space: [0; X] }
     }
 
-    pub fn new_with_state(state: [u32; X]) -> Self {
-        Self { space: state }
-    }
-
-    // pub fn new_from_vec(state: Vec<u32>) -> Self {
+    // pub fn new_with_init(mutator: &dyn Fn(&mut [u32; X])) -> Self {
     //     let mut space = [0; X];
 
-    //     for i in 0..state.len() {
-    //         space[i] = state[i];
-    //     }
+    //     mutator(&mut space);
 
     //     Self { space }
     // }
+
+    pub fn new_with_state(state: [u32; X]) -> Self {
+        Self { space: state }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -38,14 +49,6 @@ pub struct TwoDimensional<const X: usize, const Y: usize> {
 #[derive(Debug, Clone, Copy)]
 pub struct ThreeDimensional<const X: usize, const Y: usize, const Z: usize> {
     space: [[[u32; X]; Y]; Z],
-}
-
-pub trait DiscreteSpace<const D: usize> {
-    fn dim(&self) -> Dimension;
-    fn size(&self) -> [usize; D];
-
-    fn read_state(&self) -> Vec<u32>;
-    fn write_state(&mut self, state: &Vec<u32>);
 }
 
 impl<const X: usize> DiscreteSpace<1> for OneDimensional<X> {
