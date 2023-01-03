@@ -5,14 +5,15 @@ use crate::{
     space::{DiscreteSpace, TwoDimensional},
 };
 
+#[derive(Debug, Clone)]
 pub struct LifeLikeCellularAutomaton<S: DiscreteSpace<2>> {
-    b_list: [u32; 8],
-    s_list: [u32; 8],
+    b_list: &'static [u32],
+    s_list: &'static [u32],
     phantom: PhantomData<S>,
 }
 
 impl<const X: usize, const Y: usize> LifeLikeCellularAutomaton<TwoDimensional<X, Y>> {
-    pub fn new(b_list: [u32; 8], s_list: [u32; 8]) -> Self {
+    pub fn new(b_list: &'static [u32], s_list: &'static [u32]) -> Self {
         Self {
             b_list,
             s_list,
@@ -29,39 +30,54 @@ impl<const X: usize, const Y: usize> Dynamic<2, TwoDimensional<X, Y>>
     }
 
     fn update(&self, input: &Vec<u32>) -> Vec<u32> {
-        let mut output: Vec<u32> = Vec::new();
+        let mut output: Vec<u32> = (*input).to_vec();
 
-        for i in 0..input.len() {
-            let mut neighbors = 0;
+        for x in 0..X {
+            for y in 0..Y {
+                let mut neighbors = 0;
+                let current_cell = (y * X) + x;
 
-            let x = i % X;
-            let y = i / X;
+                for i in [-1, 0, 1] {
+                    for j in [-1, 0, 1] {
+                        if i == 0 && j == 0 {
+                            continue;
+                        }
 
-            for j in 0..X {
-                for k in 0..Y {
-                    if j == x && k == y {
-                        continue;
-                    }
+                        let x = match x as i32 + i {
+                            x if x < 0 => X as i32 - 1,
+                            x if x >= X as i32 => 0,
+                            _ => x as i32,
+                        };
 
-                    let index = (j * X) + k;
+                        let y = match y as i32 + j {
+                            y if y < 0 => Y as i32 - 1,
+                            y if y >= Y as i32 => 0,
+                            _ => y as i32,
+                        };
 
-                    if input[index] == 1 {
-                        neighbors += 1;
+                        // let x = (x as i32 + i) as usize;
+                        // let y = (y as i32 + j) as usize;
+
+                        // let x = if x >= X { x - X } else { x };
+                        // let y = if y >= Y { y - Y } else { y };
+
+                        let index = (y as usize * X) + x as usize;
+
+                        // println!("{index}");
+                        // println!("{}", input.len());
+
+                        if input[index] == 1 {
+                            neighbors += 1;
+                        }
                     }
                 }
-            }
 
-            if input[i] == 1 {
-                if self.s_list[neighbors as usize] == 1 {
-                    output.push(1);
+                if self.b_list.contains(&neighbors) {
+                    output[current_cell] = 1;
+                } else if self.s_list.contains(&neighbors) {
+                    output[current_cell] = input[current_cell];
                 } else {
-                    output.push(0);
-                }
-            } else {
-                if self.b_list[neighbors as usize] == 1 {
-                    output.push(1);
-                } else {
-                    output.push(0);
+                    output[current_cell] = 0;
                 }
             }
         }

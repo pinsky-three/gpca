@@ -46,6 +46,16 @@ pub struct TwoDimensional<const X: usize, const Y: usize> {
     space: [[u32; X]; Y],
 }
 
+impl<const X: usize, const Y: usize> TwoDimensional<X, Y> {
+    pub fn new() -> Self {
+        Self { space: [[0; X]; Y] }
+    }
+
+    pub fn new_with_state(state: [[u32; X]; Y]) -> Self {
+        Self { space: state }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct ThreeDimensional<const X: usize, const Y: usize, const Z: usize> {
     space: [[[u32; X]; Y]; Z],

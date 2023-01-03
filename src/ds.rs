@@ -67,8 +67,14 @@ impl<const D: usize, S: DiscreteSpace<D>, F: Dynamic<D, S>> DynamicalSystem<D, S
     }
 
     pub fn tick(&mut self) {
-        self.space
-            .write_state(&self.dynamic.update(&self.space.read_state()))
+        let state = self.space.read_state();
+
+        let next_state = self.dynamic.update(&state);
+
+        // println!("state length: {}", state.len());
+        // println!("next_state length: {}", next_state.len());
+
+        self.space.write_state(&next_state)
     }
 }
 
