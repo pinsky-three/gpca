@@ -20,7 +20,7 @@ impl<const D: usize, S: DiscreteSpace<D>, F: Dynamic<D, S>> DynamicalSystemBuild
         }
     }
 
-    pub fn update_state(&mut self, updater: &dyn Fn(&mut Vec<u32>)) -> &Self {
+    pub fn update_state(&mut self, updater: &mut dyn for<'a> FnMut(&mut Vec<u32>)) -> &Self {
         self.space.update_state(updater);
         self
     }

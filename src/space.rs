@@ -4,7 +4,7 @@ pub trait DiscreteSpace<const D: usize> {
 
     fn read_state(&self) -> Vec<u32>;
     fn write_state(&mut self, state: &Vec<u32>);
-    fn update_state(&mut self, updater: &dyn Fn(&mut Vec<u32>)) {
+    fn update_state(&mut self, updater: &mut dyn for<'a> FnMut(&'a mut Vec<u32>)) {
         let mut s = self.read_state();
         updater(&mut s);
         self.write_state(&s)

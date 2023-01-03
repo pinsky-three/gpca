@@ -4,18 +4,23 @@ use gpca::{
     space::{DiscreteSpace, OneDimensional},
 };
 use image::{ImageBuffer, Rgb, RgbImage};
+use rand::{thread_rng, Rng};
 
-const N: usize = 1000;
-const M: usize = 1000;
+const N: usize = 8000;
+const M: usize = 8000;
 
 fn main() {
+    let mut rng = thread_rng();
+
     let mut img: RgbImage = ImageBuffer::new(N as u32, M as u32);
 
     let mut space = OneDimensional::<N>::new();
-    space.update_state(&|state: &mut Vec<u32>| state[N / 2] = 1);
+    space.update_state(&mut |state: &mut Vec<u32>| {
+        state.iter_mut().for_each(|x| *x = rng.gen_range(0..2));
+    });
 
     let mut ca =
-        DynamicalSystemBuilder::new(space, ElementaryCellularAutomaton::new_from_number(90))
+        DynamicalSystemBuilder::new(space, ElementaryCellularAutomaton::new_from_number(110))
             .build();
 
     for y in 0..M {
@@ -32,5 +37,5 @@ fn main() {
         ca.tick();
     }
 
-    img.save("r28_large.png").unwrap();
+    img.save("r110_large.png").unwrap();
 }
