@@ -1,31 +1,36 @@
 use std::time::Instant;
 
+use convolutions_rs::{
+    convolutions::{conv2d, ConvolutionLayer},
+    Padding,
+};
 use gpca::{
-    ds::DynamicalSystemBuilder,
-    dynamics::{eca::ElementaryCellularAutomaton, life::LifeLikeCellularAutomaton},
-    space::{DiscreteSpace, OneDimensional, TwoDimensional},
+    ds::DynamicalSystemArrayBuilder,
+    dynamics::life::LifeLikeCellularAutomatonArray,
+    space::{DiscreteSpace, TwoDimensional},
 };
 use image::{ImageBuffer, Rgb, RgbImage};
+use ndarray::{Array, Array2, Array3, Array4};
 use rand::{thread_rng, Rng};
 
-const WIDTH: usize = 1050;
-const HEIGHT: usize = 1050;
+const WIDTH: usize = 250;
+const HEIGHT: usize = 250;
 
-const STEPS: usize = 600;
+const STEPS: usize = 10;
 
 fn main() {
     let mut rng = thread_rng();
 
     let mut img: RgbImage = ImageBuffer::new(WIDTH as u32, HEIGHT as u32);
 
-    let mut space = TwoDimensional::<WIDTH, HEIGHT>::new();
+    let mut space = TwoDimensional::<250, 250>::new();
     space.update_state(&mut |state: &mut Vec<u32>| {
         state.iter_mut().for_each(|x| *x = rng.gen_range(0..2));
     });
 
-    let dynamic = LifeLikeCellularAutomaton::new(&[3, 6, 7, 8], &[3, 4, 6, 7, 8]);
+    let dynamic = LifeLikeCellularAutomatonArray::new(&[3], &[2, 3]);
 
-    let mut ca = DynamicalSystemBuilder::new(space, dynamic).build();
+    let mut ca = DynamicalSystemArrayBuilder::new(space, dynamic).build();
 
     let now = Instant::now();
 
@@ -54,5 +59,5 @@ fn main() {
         }
     }
 
-    img.save("day_night_2.png").unwrap();
+    img.save("gol.png").unwrap();
 }

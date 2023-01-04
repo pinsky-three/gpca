@@ -1,3 +1,5 @@
+use ndarray::{Array2, ArrayBase, Dim, OwnedRepr};
+
 pub trait DiscreteSpace<const D: usize> {
     fn dim(&self) -> Dimension;
     fn size(&self) -> [usize; D];
@@ -5,6 +7,23 @@ pub trait DiscreteSpace<const D: usize> {
     fn read_state(&self) -> Vec<u32>;
     fn write_state(&mut self, state: &Vec<u32>);
     fn update_state(&mut self, updater: &mut dyn for<'a> FnMut(&'a mut Vec<u32>)) {
+        let mut s = self.read_state();
+        updater(&mut s);
+        self.write_state(&s)
+    }
+}
+
+pub trait DiscreteSpaceArray<const D: usize> {
+    fn dim(&self) -> Dimension;
+    fn size(&self) -> [usize; D];
+
+    fn read_state(&self) -> ArrayBase<OwnedRepr<u32>, Dim<[usize; D]>>;
+    fn write_state(&mut self, state: &ArrayBase<OwnedRepr<u32>, Dim<[usize; D]>>);
+
+    fn update_state(
+        &mut self,
+        updater: &mut dyn for<'a> FnMut(&'a mut ArrayBase<OwnedRepr<u32>, Dim<[usize; D]>>),
+    ) {
         let mut s = self.read_state();
         updater(&mut s);
         self.write_state(&s)
@@ -35,19 +54,20 @@ impl<const X: usize> OneDimensional<X> {
 
 #[derive(Debug, Clone)]
 pub struct TwoDimensional<const X: usize, const Y: usize> {
-    space: Box<[[u32; X]; Y]>,
+    // space: Box<[[u32; X]; Y]>,
+    space: Array2<u32>,
 }
 
 impl<const X: usize, const Y: usize> TwoDimensional<X, Y> {
     pub fn new() -> Self {
         Self {
-            space: Box::new([[0; X]; Y]),
+            space: Array2::zeros((X, Y)),
         }
     }
 
-    pub fn new_with_state(state: [[u32; X]; Y]) -> Self {
+    pub fn new_with_state(state: Array2<u32>) -> Self {
         Self {
-            space: Box::new(state),
+            space: Array2::from(state),
         }
     }
 }
@@ -81,29 +101,51 @@ impl<const X: usize, const Y: usize> DiscreteSpace<2> for TwoDimensional<X, Y> {
     }
 
     fn size(&self) -> [usize; 2] {
-        [self.space.len(), self.space.first().unwrap().len()]
+        self.space.shape().try_into().unwrap()
+        // [self.space.len(), self.space.first().unwrap().len()]
     }
 
     fn read_state(&self) -> Vec<u32> {
-        self.space
-            .to_vec()
-            .iter()
-            .map(|r| r.to_vec())
-            .flatten()
-            .collect::<Vec<u32>>()
+        Vec::from(self.space.as_slice().unwrap())
+        // self.space
+        //     // .to_vec()
+        //     .iter()
+        //     .map(|r| r)
+        //     .flatten()
+        //     .collect::<Vec<u32>>()
     }
 
     fn write_state(&mut self, state: &Vec<u32>) {
-        self.space = Box::new(
-            state
-                .to_vec()
-                .chunks(X)
-                .map(|r| r.try_into().unwrap())
-                .collect::<Vec<[u32; X]>>()
-                .as_slice()
-                .try_into()
-                .unwrap(),
-        );
+        self.space = Array2::from_shape_vec((X, Y), state.to_vec()).unwrap();
+        // self.space = Box::new(
+        //     state
+        //         .to_vec()
+        //         .chunks(X)
+        //         .map(|r| r.try_into().unwrap())
+        //         .collect::<Vec<[u32; X]>>()
+        //         .as_slice()
+        //         .try_into()
+        //         .unwrap(),
+        // );
+    }
+}
+
+impl<const X: usize, const Y: usize> DiscreteSpaceArray<2> for TwoDimensional<X, Y> {
+    fn dim(&self) -> Dimension {
+        Dimension::Two
+    }
+
+    fn size(&self) -> [usize; 2] {
+        self.space.shape().try_into().unwrap()
+        // [self.space.len(), self.space.first().unwrap().len()]
+    }
+
+    fn read_state(&self) -> ArrayBase<OwnedRepr<u32>, Dim<[usize; 2]>> {
+        self.space.clone()
+    }
+
+    fn write_state(&mut self, state: &ArrayBase<OwnedRepr<u32>, Dim<[usize; 2]>>) {
+        self.space = state.clone();
     }
 }
 
