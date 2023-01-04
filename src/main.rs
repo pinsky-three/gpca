@@ -9,7 +9,7 @@ use rand::{thread_rng, Rng};
 const WIDTH: usize = 512;
 const HEIGHT: usize = 512;
 
-const STEPS: usize = 10;
+const STEPS: usize = 100;
 
 fn main() {
     let mut rng = thread_rng();
@@ -27,7 +27,6 @@ fn main() {
 
     for _ in 0..STEPS {
         ca.tick();
-        println!("tick");
     }
 
     let state = ca.space().read_state();

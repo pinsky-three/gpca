@@ -1,6 +1,4 @@
-use std::marker::PhantomData;
-
-use crate::space::{DiscreteSpace, OneDimensional};
+use crate::space::DiscreteSpace;
 
 pub trait Dynamic<const D: usize, S: DiscreteSpace<D>> {
     fn states(&self) -> u32;
