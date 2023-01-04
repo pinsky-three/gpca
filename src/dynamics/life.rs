@@ -1,7 +1,5 @@
 use std::marker::PhantomData;
 
-use itertools::Itertools;
-
 use crate::{
     dynamic::Dynamic,
     space::{DiscreteSpace, TwoDimensional},
@@ -34,17 +32,6 @@ impl<const X: usize, const Y: usize> Dynamic<2, TwoDimensional<X, Y>>
     fn update(&self, input: &Vec<u32>) -> Vec<u32> {
         let mut output: Vec<u32> = input.to_vec();
 
-        // println!(
-        //     "input:\n{}",
-        //     input
-        //         .iter()
-        //         .chunks(X)
-        //         .into_iter()
-        //         .map(|r| format!("{:?}", r.collect::<Vec<&u32>>()))
-        //         .collect::<Vec<String>>()
-        //         .join("\n")
-        // );
-
         for x in 0..X as i32 {
             for y in 0..Y as i32 {
                 let neighbors = {
@@ -61,39 +48,25 @@ impl<const X: usize, const Y: usize> Dynamic<2, TwoDimensional<X, Y>>
 
                             let current_cell = (y * X as i32) + x;
 
-                            n += *input.get(current_cell as usize).unwrap();
+                            n += input[current_cell as usize];
                         }
                     }
 
                     n
                 };
 
-                // println!("current cell: ({}, {})", x, y);
-                // println!("n: {}", neighbors);
-
                 let current_cell = (y * X as i32) + x;
 
                 if self.b_list.contains(&neighbors) {
                     output[current_cell as usize] = 1;
                 } else if self.s_list.contains(&neighbors) {
-                    output[current_cell as usize] = *input.get(current_cell as usize).unwrap();
+                    output[current_cell as usize] = input[current_cell as usize];
                 } else {
                     output[current_cell as usize] = 0;
                     // println!("set 0");
                 }
             }
         }
-
-        // println!(
-        //     "output:\n{}",
-        //     output
-        //         .iter()
-        //         .chunks(X)
-        //         .into_iter()
-        //         .map(|r| format!("{:?}", r.collect::<Vec<&u32>>()))
-        //         .collect::<Vec<String>>()
-        //         .join("\n")
-        // );
 
         output
     }

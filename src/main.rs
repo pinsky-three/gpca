@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use gpca::{
     ds::DynamicalSystemBuilder,
     dynamics::{eca::ElementaryCellularAutomaton, life::LifeLikeCellularAutomaton},
@@ -6,10 +8,10 @@ use gpca::{
 use image::{ImageBuffer, Rgb, RgbImage};
 use rand::{thread_rng, Rng};
 
-const WIDTH: usize = 512;
-const HEIGHT: usize = 512;
+const WIDTH: usize = 1050;
+const HEIGHT: usize = 1050;
 
-const STEPS: usize = 100;
+const STEPS: usize = 600;
 
 fn main() {
     let mut rng = thread_rng();
@@ -21,13 +23,22 @@ fn main() {
         state.iter_mut().for_each(|x| *x = rng.gen_range(0..2));
     });
 
-    let dynamic = LifeLikeCellularAutomaton::new(&[3], &[2, 3]);
+    let dynamic = LifeLikeCellularAutomaton::new(&[3, 6, 7, 8], &[3, 4, 6, 7, 8]);
 
     let mut ca = DynamicalSystemBuilder::new(space, dynamic).build();
+
+    let now = Instant::now();
 
     for _ in 0..STEPS {
         ca.tick();
     }
+
+    let elapsed = now.elapsed();
+
+    println!(
+        "ticks per seconds: {:.2}",
+        STEPS as f64 / elapsed.as_secs_f64()
+    );
 
     let state = ca.space().read_state();
 
@@ -43,5 +54,5 @@ fn main() {
         }
     }
 
-    img.save("life.png").unwrap();
+    img.save("day_night_2.png").unwrap();
 }

@@ -28,31 +28,27 @@ impl<const X: usize> OneDimensional<X> {
         Self { space: [0; X] }
     }
 
-    // pub fn new_with_init(mutator: &dyn Fn(&mut [u32; X])) -> Self {
-    //     let mut space = [0; X];
-
-    //     mutator(&mut space);
-
-    //     Self { space }
-    // }
-
     pub fn new_with_state(state: [u32; X]) -> Self {
         Self { space: state }
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct TwoDimensional<const X: usize, const Y: usize> {
-    space: [[u32; X]; Y],
+    space: Box<[[u32; X]; Y]>,
 }
 
 impl<const X: usize, const Y: usize> TwoDimensional<X, Y> {
     pub fn new() -> Self {
-        Self { space: [[0; X]; Y] }
+        Self {
+            space: Box::new([[0; X]; Y]),
+        }
     }
 
     pub fn new_with_state(state: [[u32; X]; Y]) -> Self {
-        Self { space: state }
+        Self {
+            space: Box::new(state),
+        }
     }
 }
 
@@ -98,14 +94,16 @@ impl<const X: usize, const Y: usize> DiscreteSpace<2> for TwoDimensional<X, Y> {
     }
 
     fn write_state(&mut self, state: &Vec<u32>) {
-        self.space = state
-            .to_vec()
-            .chunks(X)
-            .map(|r| r.try_into().unwrap())
-            .collect::<Vec<[u32; X]>>()
-            .as_slice()
-            .try_into()
-            .unwrap();
+        self.space = Box::new(
+            state
+                .to_vec()
+                .chunks(X)
+                .map(|r| r.try_into().unwrap())
+                .collect::<Vec<[u32; X]>>()
+                .as_slice()
+                .try_into()
+                .unwrap(),
+        );
     }
 }
 
