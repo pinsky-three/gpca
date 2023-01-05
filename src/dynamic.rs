@@ -8,6 +8,7 @@ pub trait Dynamic<const D: usize, S: DiscreteSpace<D>> {
 }
 
 pub trait DynamicArray<const D: usize, S: DiscreteSpaceArray<D>> {
+    fn name(&self) -> String;
     fn states(&self) -> u32;
     fn update(
         &self,

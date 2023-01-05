@@ -80,6 +80,19 @@ impl<const D: usize, S: DiscreteSpaceArray<D>, F: DynamicArray<D, S>>
 
         self.space.write_state(&next_state)
     }
+
+    pub fn name(&self) -> String {
+        format!(
+            "{}_{}",
+            self.dynamic.name(),
+            self.space
+                .size()
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join("_"),
+        )
+    }
 }
 
 pub struct DynamicalSystemArrayBuilder<
