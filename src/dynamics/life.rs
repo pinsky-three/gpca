@@ -43,6 +43,22 @@ impl<const X: usize, const Y: usize> LifeLikeCellularAutomatonArray<TwoDimension
 impl<const X: usize, const Y: usize> Dynamic<2, TwoDimensional<X, Y>>
     for LifeLikeCellularAutomaton<TwoDimensional<X, Y>>
 {
+    fn name(&self) -> String {
+        format!(
+            "lifelike_b{}_s{}",
+            self.b_list
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(""),
+            self.s_list
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join("")
+        )
+    }
+
     fn states(&self) -> u32 {
         2
     }

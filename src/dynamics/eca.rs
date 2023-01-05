@@ -33,6 +33,12 @@ impl<const X: usize> ElementaryCellularAutomaton<OneDimensional<X>> {
 impl<const X: usize> Dynamic<1, OneDimensional<X>>
     for ElementaryCellularAutomaton<OneDimensional<X>>
 {
+    fn name(&self) -> String {
+        let r: u32 = self.rule.iter().map(|x| 1 << x).sum();
+
+        format!("eca_{}", r)
+    }
+
     fn states(&self) -> u32 {
         2
     }

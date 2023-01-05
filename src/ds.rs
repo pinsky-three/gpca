@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use ndarray::{ArrayBase, Dim, OwnedRepr};
 
 use crate::dynamic::{Dynamic, DynamicArray};
@@ -58,6 +60,31 @@ impl<const D: usize, S: DiscreteSpace<D>, F: Dynamic<D, S>> DynamicalSystem<D, S
 
         self.space.write_state(&next_state)
     }
+
+    pub fn name(&self) -> String {
+        format!(
+            "{}_{}",
+            self.dynamic.name(),
+            self.space
+                .size()
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join("_"),
+        )
+    }
+
+    pub fn evolve(&mut self, steps: usize) -> f64 {
+        let now = Instant::now();
+
+        for _ in 0..steps {
+            self.tick();
+        }
+
+        let elapsed = now.elapsed();
+
+        steps as f64 / elapsed.as_secs_f64()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -92,6 +119,18 @@ impl<const D: usize, S: DiscreteSpaceArray<D>, F: DynamicArray<D, S>>
                 .collect::<Vec<String>>()
                 .join("_"),
         )
+    }
+
+    pub fn evolve(&mut self, steps: usize) -> f64 {
+        let now = Instant::now();
+
+        for _ in 0..steps {
+            self.tick();
+        }
+
+        let elapsed = now.elapsed();
+
+        steps as f64 / elapsed.as_secs_f64()
     }
 }
 

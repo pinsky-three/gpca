@@ -4,3 +4,4 @@ pub mod dynamics;
 pub mod graphics;
 pub mod render;
 pub mod space;
+pub mod utils;
