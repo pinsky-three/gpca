@@ -1,6 +1,6 @@
 use std::ops::RangeBounds;
 
-use ndarray::{Array2, ArrayBase, Dim, OwnedRepr};
+use ndarray::{Array1, Array2, ArrayBase, Dim, OwnedRepr};
 use rand::{
     distributions::uniform::{SampleRange, SampleUniform},
     thread_rng, Rng,
@@ -43,24 +43,25 @@ pub enum Dimension {
     Three,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct OneDimensional<const X: usize> {
-    space: [u32; X],
+    state: Array1<u32>,
 }
 
 impl<const X: usize> OneDimensional<X> {
     pub fn new() -> Self {
-        Self { space: [0; X] }
+        Self {
+            state: Array1::zeros(X),
+        }
     }
 
-    pub fn new_with_state(state: [u32; X]) -> Self {
-        Self { space: state }
+    pub fn new_with_state(state: Array1<u32>) -> Self {
+        Self { state }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct TwoDimensional<const X: usize, const Y: usize> {
-    // space: Box<[[u32; X]; Y]>,
     state: Array2<u32>,
 }
 
@@ -98,15 +99,33 @@ impl<const X: usize> DiscreteSpace<1> for OneDimensional<X> {
     }
 
     fn size(&self) -> [usize; 1] {
-        [self.space.len()]
+        [self.state.len()]
     }
 
     fn read_state(&self) -> Vec<u32> {
-        self.space.to_vec()
+        self.state.to_vec()
     }
 
     fn write_state(&mut self, state: &Vec<u32>) {
-        self.space = state.to_vec().as_slice().try_into().unwrap();
+        self.state = Array1::from(state.to_vec());
+    }
+}
+
+impl<const X: usize> DiscreteSpaceArray<1> for OneDimensional<X> {
+    fn dim(&self) -> Dimension {
+        Dimension::One
+    }
+
+    fn size(&self) -> [usize; 1] {
+        self.state.shape().try_into().unwrap()
+    }
+
+    fn read_state(&self) -> ArrayBase<OwnedRepr<u32>, Dim<[usize; 1]>> {
+        self.state.to_owned()
+    }
+
+    fn write_state(&mut self, state: &ArrayBase<OwnedRepr<u32>, Dim<[usize; 1]>>) {
+        self.state = state.to_owned();
     }
 }
 
@@ -117,31 +136,14 @@ impl<const X: usize, const Y: usize> DiscreteSpace<2> for TwoDimensional<X, Y> {
 
     fn size(&self) -> [usize; 2] {
         self.state.shape().try_into().unwrap()
-        // [self.space.len(), self.space.first().unwrap().len()]
     }
 
     fn read_state(&self) -> Vec<u32> {
         Vec::from(self.state.as_slice().unwrap())
-        // self.space
-        //     // .to_vec()
-        //     .iter()
-        //     .map(|r| r)
-        //     .flatten()
-        //     .collect::<Vec<u32>>()
     }
 
     fn write_state(&mut self, state: &Vec<u32>) {
         self.state = Array2::from_shape_vec((X, Y), state.to_vec()).unwrap();
-        // self.space = Box::new(
-        //     state
-        //         .to_vec()
-        //         .chunks(X)
-        //         .map(|r| r.try_into().unwrap())
-        //         .collect::<Vec<[u32; X]>>()
-        //         .as_slice()
-        //         .try_into()
-        //         .unwrap(),
-        // );
     }
 }
 

@@ -4,13 +4,13 @@ use gpca::{
 };
 
 fn main() {
-    let space = TwoDimensional::<2048, 2048>::new_random(2);
+    let mut ca = DynamicalSystemArrayBuilder::new(
+        TwoDimensional::<512, 512>::new_random(2),
+        LifeLikeCellularAutomatonArray::new(&[3], &[2, 3]),
+    )
+    .build();
 
-    let dynamic = LifeLikeCellularAutomatonArray::new(&[3], &[2, 3]);
-
-    let mut ca = DynamicalSystemArrayBuilder::new(space, dynamic).build();
-
-    let tps = ca.evolve(320);
+    let tps = ca.evolve(60);
 
     println!("ticks per seconds: {:.2}", tps);
 
