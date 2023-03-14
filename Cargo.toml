@@ -8,4 +8,7 @@ edition = "2021"
 [dependencies]
 image = "0.24.5"
 itertools = "0.10.5"
+kdam = "0.3.0"
 rand = "0.8.5"
+rayon = "1.7.0"
+tokio = { version="1.26.0", features = ["full"] }
