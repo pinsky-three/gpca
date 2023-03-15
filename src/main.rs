@@ -29,17 +29,17 @@ enum LifeState {
 
 fn new_game_of_life_hyper_graph<const D: usize>(
     nodes: Box<[LifeState; D]>,
-) -> HyperGraph<D, LifeState, u32> {
-    let mut edges = vec![];
+) -> HyperGraph<D, LifeState, ()> {
+    // let mut edges = vec![];
 
     let n = f32::sqrt(nodes.len() as f32) as i32;
 
-    let mut neighbors = HashMap::<usize, Vec<usize>>::new();
+    let mut neighbors = HashMap::<usize, Vec<(usize, ())>>::new();
 
     for i in 0..n {
         for j in 0..n {
             let index = i * n + j;
-            let mut local_neighborhood = Vec::<usize>::new();
+            let mut local_neighborhood = Vec::<(usize, ())>::new();
 
             for x in vec![-1, 0, 1] {
                 for y in vec![-1, 0, 1] {
@@ -67,22 +67,22 @@ fn new_game_of_life_hyper_graph<const D: usize>(
 
                     let neighbor_index = dx * n + dy;
 
-                    edges.push(vec![index as usize, neighbor_index as usize]);
-                    local_neighborhood.push(neighbor_index as usize);
+                    // edges.push(vec![index as usize, neighbor_index as usize]);
+                    local_neighborhood.push((neighbor_index as usize, ()));
                 }
             }
             neighbors.insert(index as usize, local_neighborhood);
         }
     }
-    HyperGraph::new(nodes, edges, neighbors)
+    HyperGraph::new(nodes, neighbors)
 }
 
 #[tokio::main]
 async fn main() {
-    const W: usize = 128;
+    const W: usize = 512;
     const H: usize = W;
 
-    let mut mem = box_array![LifeState::Dead; W*H];
+    let mut mem = box_array![LifeState::Dead; 262144];
 
     mem.par_iter_mut().for_each(|x| {
         *x = if thread_rng().gen_bool(0.5) {

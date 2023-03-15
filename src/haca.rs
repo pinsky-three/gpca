@@ -1,17 +1,16 @@
 use dashmap::DashMap;
+use itertools::Itertools;
 use kdam::tqdm;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
-use std::{collections::HashMap, hash::Hash, marker::PhantomData};
+use std::{collections::HashMap, hash::Hash};
 
 pub struct HyperGraph<const D: usize, N, E>
 where
     N: Clone + Sync + Send + Hash + Eq,
-    E: Clone + Sync + Send,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash,
 {
     nodes: Box<[N; D]>,
-    edges: Vec<Vec<usize>>,
-    node_neighbors: HashMap<usize, Vec<usize>>,
-    edge_type: PhantomData<E>,
+    node_neighbors: HashMap<usize, Vec<(usize, E)>>,
     memoization: DashMap<(N, Vec<N>), N>,
 }
 
@@ -20,18 +19,12 @@ type HyperGraphDynamic<N> = dyn Fn(&N, &[N]) -> N + Sync + Send;
 impl<const D: usize, N, E> HyperGraph<D, N, E>
 where
     N: Clone + Sync + Send + Hash + Eq,
-    E: Clone + Sync + Send,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash,
 {
-    pub fn new(
-        nodes: Box<[N; D]>,
-        edges: Vec<Vec<usize>>,
-        node_neighbors: HashMap<usize, Vec<usize>>,
-    ) -> Self {
+    pub fn new(nodes: Box<[N; D]>, node_neighbors: HashMap<usize, Vec<(usize, E)>>) -> Self {
         Self {
             nodes,
-            edges,
             node_neighbors,
-            edge_type: PhantomData,
             memoization: DashMap::new(),
         }
     }
@@ -40,11 +33,18 @@ where
         &self.nodes
     }
 
-    pub fn edges(&self) -> &Vec<Vec<usize>> {
-        &self.edges
+    pub fn edges(&self) -> Vec<E> {
+        self.node_neighbors
+            .iter()
+            .map(|(_, v)| v)
+            .flatten()
+            .map(|(_, e)| e)
+            .unique()
+            .map(|e| e.to_owned())
+            .collect()
     }
 
-    pub fn neighbors(&self, node: &usize) -> Vec<usize> {
+    pub fn neighbors(&self, node: &usize) -> Vec<(usize, E)> {
         self.node_neighbors.get(node).unwrap().to_owned()
     }
 
@@ -65,7 +65,7 @@ where
 
             let nodes_values = nodes_indexes
                 .iter()
-                .map(|i| self.nodes[*i].to_owned())
+                .map(|i| self.nodes[(*i).0].to_owned())
                 .collect::<Vec<N>>();
 
             let node_with_neighbors = (node.clone(), nodes_values.clone());
@@ -97,7 +97,7 @@ where
 
             let nodes_values = nodes_indexes
                 .iter()
-                .map(|i| self.nodes[*i].to_owned())
+                .map(|i| self.nodes[(*i).0].to_owned())
                 .collect::<Vec<_>>();
 
             *node = update(node, &nodes_values);
