@@ -7,7 +7,7 @@ use std::{collections::HashMap, hash::Hash};
 pub struct HyperGraph<const D: usize, N, E>
 where
     N: Clone + Sync + Send + Hash + Eq,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
 {
     nodes: Box<[N; D]>,
     node_neighbors: HashMap<usize, Vec<(usize, E)>>,
@@ -18,8 +18,8 @@ type HyperGraphDynamic<N> = dyn Fn(&N, &[N]) -> N + Sync + Send;
 
 impl<const D: usize, N, E> HyperGraph<D, N, E>
 where
-    N: Clone + Sync + Send + Hash + Eq,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash,
+    N: Clone + Sync + Send + Hash + Eq + Copy,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
 {
     pub fn new(nodes: Box<[N; D]>, node_neighbors: HashMap<usize, Vec<(usize, E)>>) -> Self {
         Self {
@@ -34,6 +34,7 @@ where
     }
 
     pub fn edges(&self) -> Vec<E> {
+        // &[E]
         self.node_neighbors
             .iter()
             .map(|(_, v)| v)
@@ -41,7 +42,8 @@ where
             .map(|(_, e)| e)
             .unique()
             .map(|e| e.to_owned())
-            .collect()
+            .collect::<Vec<E>>()
+        // .as_slice()
     }
 
     pub fn neighbors(&self, node: &usize) -> Vec<(usize, E)> {
@@ -56,7 +58,7 @@ where
 
     pub async fn update_nodes_by_neighborhood<'a>(&mut self, update: &'a HyperGraphDynamic<N>)
     where
-        N: Clone + Sync + Send + Sized + Hash + Eq,
+        N: Clone + Sync + Send + Sized + Hash + Eq + Copy,
     {
         let mut new_nodes = self.nodes.clone();
 
@@ -72,11 +74,10 @@ where
 
             // Check if the node with its neighbors is memoized
             if let Some(new_node) = self.memoization.get(&node_with_neighbors) {
-                *node = new_node.value().clone();
+                *node = *new_node.value();
             } else {
                 let new_node = update(node, &nodes_values);
-                self.memoization
-                    .insert(node_with_neighbors, new_node.clone());
+                self.memoization.insert(node_with_neighbors, new_node);
                 *node = new_node;
             }
         });
@@ -101,9 +102,6 @@ where
                 .collect::<Vec<_>>();
 
             *node = update(node, &nodes_values);
-
-            // self.nodes.get_many_mut(nodes_indexes);
-            // self.nodes[i] = f(node, &nodes_values);
         });
 
         self.nodes = new_nodes;

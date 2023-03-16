@@ -1,9 +1,10 @@
+pub mod bregy;
+
 use std::collections::HashMap;
 
 use gpca::haca::HyperGraph;
 use image::{ImageBuffer, Rgb, RgbImage};
 
-use kdam::tqdm;
 use rand::{thread_rng, Rng};
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
@@ -30,8 +31,6 @@ enum LifeState {
 fn new_game_of_life_hyper_graph<const D: usize>(
     nodes: Box<[LifeState; D]>,
 ) -> HyperGraph<D, LifeState, ()> {
-    // let mut edges = vec![];
-
     let n = f32::sqrt(nodes.len() as f32) as i32;
 
     let mut neighbors = HashMap::<usize, Vec<(usize, ())>>::new();
@@ -67,10 +66,10 @@ fn new_game_of_life_hyper_graph<const D: usize>(
 
                     let neighbor_index = dx * n + dy;
 
-                    // edges.push(vec![index as usize, neighbor_index as usize]);
                     local_neighborhood.push((neighbor_index as usize, ()));
                 }
             }
+
             neighbors.insert(index as usize, local_neighborhood);
         }
     }
@@ -94,39 +93,39 @@ async fn main() {
 
     let mut graph = new_game_of_life_hyper_graph(mem);
 
-    // graph
-    //     .run_hashlife(1000, &|current, neighborhood| {
-    //         let neighbors = neighborhood
-    //             .iter()
-    //             .filter(|x| **x == LifeState::Alive)
-    //             .count();
-    //         if neighbors == 3 {
-    //             LifeState::Alive
-    //         } else if neighbors == 2 {
-    //             *current
-    //         } else {
-    //             LifeState::Dead
-    //         }
-    //     })
-    //     .await;
+    // for _ in tqdm!(0..1000) {
+    //     graph
+    //         .classic_update_nodes_by_neighborhood(|current, neighborhood| {
+    //             let neighbors = neighborhood
+    //                 .iter()
+    //                 .filter(|x| **x == LifeState::Alive)
+    //                 .count();
+    //             if neighbors == 3 {
+    //                 LifeState::Alive
+    //             } else if neighbors == 2 {
+    //                 *current
+    //             } else {
+    //                 LifeState::Dead
+    //             }
+    //         })
+    //         .await;
+    // }
 
-    for _ in tqdm!(0..1000) {
-        graph
-            .classic_update_nodes_by_neighborhood(|current, neighborhood| {
-                let neighbors = neighborhood
-                    .iter()
-                    .filter(|x| **x == LifeState::Alive)
-                    .count();
-                if neighbors == 3 {
-                    LifeState::Alive
-                } else if neighbors == 2 {
-                    *current
-                } else {
-                    LifeState::Dead
-                }
-            })
-            .await;
-    }
+    graph
+        .run_hashlife(1000, &|current, neighborhood| {
+            let neighbors = neighborhood
+                .iter()
+                .filter(|x| **x == LifeState::Alive)
+                .count();
+            if neighbors == 3 {
+                LifeState::Alive
+            } else if neighbors == 2 {
+                *current
+            } else {
+                LifeState::Dead
+            }
+        })
+        .await;
 
     let mut img: RgbImage = ImageBuffer::new(W as u32, H as u32);
 
