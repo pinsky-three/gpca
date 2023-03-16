@@ -9,6 +9,8 @@ use image::{ImageBuffer, Rgb, RgbImage};
 use rand::{thread_rng, Rng};
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
+use crate::bregy::{build_quadtree_2, build_quadtree_recursive, Cell, LocalHyperGraph};
+
 macro_rules! box_array {
     ($val:expr ; $len:expr) => {{
         fn vec_to_boxed_array<T>(vec: Vec<T>) -> Box<[T; $len]> {
@@ -145,8 +147,4 @@ async fn main() {
     // }
 
     // img.save("hca_game_of_life_test.png").unwrap();
-
-    let quadtree = build_quadtree::<2>(3);
-
-    println!("{:?}", quadtree);
 }
