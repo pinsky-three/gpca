@@ -2,14 +2,16 @@ pub mod bregy;
 
 use std::collections::HashMap;
 
-use bregy::build_quadtree;
+use bregy::draw_ascii;
 use gpca::haca::HyperGraph;
 use image::{ImageBuffer, Rgb, RgbImage};
 
 use rand::{thread_rng, Rng};
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::bregy::{build_quadtree_2, build_quadtree_recursive, Cell, LocalHyperGraph};
+use crate::bregy::{
+    build_quadtree_2, build_quadtree_3, build_quadtree_recursive, Cell, LocalHyperGraph,
+};
 
 macro_rules! box_array {
     ($val:expr ; $len:expr) => {{
@@ -147,4 +149,17 @@ async fn main() {
     // }
 
     // img.save("hca_game_of_life_test.png").unwrap();
+    let quadtree = build_quadtree_3(
+        3,
+        Cell {
+            x: 0,
+            y: 0,
+            width: 1000,
+            height: 1000,
+        },
+    );
+
+    println!("{:?}", quadtree);
+
+    // draw_ascii(&quadtree, 8);
 }

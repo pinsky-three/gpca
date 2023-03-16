@@ -7,30 +7,31 @@ use std::{
 type HyperEdge<E> = (Box<Vec<usize>>, E);
 
 #[derive(Clone)]
-pub struct LocalHyperGraph<const D: usize, N, E>
+pub struct LocalHyperGraph<N, E>
 where
     N: Clone + Sync + Send + Hash + Eq + Default,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
 {
-    nodes: Box<[N; D]>,
+    nodes: Vec<N>,
     edges: HashMap<usize, HyperEdge<E>>,
 }
 
-impl<const D: usize, N, E> LocalHyperGraph<D, N, E>
+impl<N, E> LocalHyperGraph<N, E>
 where
     N: Clone + Sync + Send + Hash + Eq + Default + Copy,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
 {
-    pub fn new(nodes: Box<[N; D]>, edges: HashMap<usize, HyperEdge<E>>) -> Self {
+    pub fn new(nodes: Vec<N>, edges: HashMap<usize, HyperEdge<E>>) -> Self {
         Self { nodes, edges }
     }
 
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
-            nodes: Box::new([N::default(); D]),
+            nodes: vec![N::default(); capacity],
             edges: HashMap::with_capacity(capacity),
         }
     }
+
     pub fn is_leaf_node(&self, node: &N) -> bool {
         let count = self
             .edges
@@ -45,12 +46,8 @@ where
         match index {
             Some(i) => i,
             None => {
-                let position = self
-                    .nodes
-                    .iter()
-                    .position(|n| n.clone() == N::default())
-                    .unwrap();
-                self.nodes[position] = node;
+                let position = self.nodes.len();
+                self.nodes.push(node);
                 position
             }
         }
@@ -61,62 +58,62 @@ where
     }
 }
 
-#[derive(Clone)]
-pub enum ComplexHyperGraph<const D: usize, N, E>
-where
-    N: Clone + Sync + Send + Hash + Eq + Default,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
-{
-    SubGraphs(HashMap<HyperEdge<E>, Self>),
-    HyperGraph(Box<LocalHyperGraph<D, N, E>>),
-}
+// #[derive(Clone)]
+// pub enum ComplexHyperGraph<const D: usize, N, E>
+// where
+//     N: Clone + Sync + Send + Hash + Eq + Default,
+//     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+// {
+//     SubGraphs(HashMap<HyperEdge<E>, Self>),
+//     HyperGraph(Box<LocalHyperGraph<D, N, E>>),
+// }
 
-impl<const D: usize, N, E> ComplexHyperGraph<D, N, E>
-where
-    N: Clone + Sync + Send + Hash + Eq + Default,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
-{
-    pub fn if_leaf<F, R>(&self, f: F) -> Option<R>
-    where
-        F: FnOnce(&LocalHyperGraph<D, N, E>) -> R,
-    {
-        match self {
-            ComplexHyperGraph::SubGraphs(_) => None,
-            ComplexHyperGraph::HyperGraph(hg) => Some(f(hg)),
-        }
-    }
-}
+// impl<const D: usize, N, E> ComplexHyperGraph<D, N, E>
+// where
+//     N: Clone + Sync + Send + Hash + Eq + Default,
+//     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+// {
+//     pub fn if_leaf<F, R>(&self, f: F) -> Option<R>
+//     where
+//         F: FnOnce(&LocalHyperGraph<D, N, E>) -> R,
+//     {
+//         match self {
+//             ComplexHyperGraph::SubGraphs(_) => None,
+//             ComplexHyperGraph::HyperGraph(hg) => Some(f(hg)),
+//         }
+//     }
+// }
 
-fn create_quadtree<const D: usize>(
-    depth: usize,
-    current_depth: usize,
-) -> ComplexHyperGraph<D, Vec<bool>, ()> {
-    if current_depth == depth {
-        let nodes_vec: Vec<Vec<bool>> = vec![vec![false; 1 << current_depth]; D];
-        let nodes: Box<[Vec<bool>; D]> = match nodes_vec.try_into() {
-            Ok(array) => Box::new(array),
-            Err(_) => panic!("Failed to convert Vec into Box<[Vec<bool>; D]>"),
-        };
-        ComplexHyperGraph::HyperGraph(Box::new(LocalHyperGraph {
-            nodes,
-            edges: HashMap::new(),
-        }))
-    } else {
-        let mut subgraphs = HashMap::new();
-        for _ in 0..4 {
-            let subgraph = create_quadtree::<D>(depth, current_depth + 1);
-            let edge = (Box::new(vec![0]), ());
-            subgraphs.insert(edge, subgraph);
-        }
-        ComplexHyperGraph::SubGraphs(subgraphs)
-    }
-}
+// fn create_quadtree<const D: usize>(
+//     depth: usize,
+//     current_depth: usize,
+// ) -> ComplexHyperGraph<D, Vec<bool>, ()> {
+//     if current_depth == depth {
+//         let nodes_vec: Vec<Vec<bool>> = vec![vec![false; 1 << current_depth]; D];
+//         let nodes: Box<[Vec<bool>; D]> = match nodes_vec.try_into() {
+//             Ok(array) => Box::new(array),
+//             Err(_) => panic!("Failed to convert Vec into Box<[Vec<bool>; D]>"),
+//         };
+//         ComplexHyperGraph::HyperGraph(Box::new(LocalHyperGraph {
+//             nodes,
+//             edges: HashMap::new(),
+//         }))
+//     } else {
+//         let mut subgraphs = HashMap::new();
+//         for _ in 0..4 {
+//             let subgraph = create_quadtree::<D>(depth, current_depth + 1);
+//             let edge = (Box::new(vec![0]), ());
+//             subgraphs.insert(edge, subgraph);
+//         }
+//         ComplexHyperGraph::SubGraphs(subgraphs)
+//     }
+// }
 
-pub fn build_quadtree<const D: usize>(depth: usize) -> ComplexHyperGraph<D, Vec<bool>, ()> {
-    create_quadtree::<D>(depth, 0)
-}
+// pub fn build_quadtree<const D: usize>(depth: usize) -> ComplexHyperGraph<D, Vec<bool>, ()> {
+//     create_quadtree::<D>(depth, 0)
+// }
 
-impl<const D: usize, N, E> Debug for LocalHyperGraph<D, N, E>
+impl<N, E> Debug for LocalHyperGraph<N, E>
 where
     N: Clone + Sync + Send + Hash + Eq + Debug + Default,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
@@ -129,21 +126,21 @@ where
     }
 }
 
-impl<const D: usize, N, E> Debug for ComplexHyperGraph<D, N, E>
-where
-    N: Clone + Sync + Send + Hash + Eq + Debug + Default,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
-{
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        match self {
-            ComplexHyperGraph::SubGraphs(subgraphs) => f
-                .debug_map()
-                .entries(subgraphs.iter().map(|(k, v)| (k, v)))
-                .finish(),
-            ComplexHyperGraph::HyperGraph(hg) => hg.fmt(f),
-        }
-    }
-}
+// impl<const D: usize, N, E> Debug for ComplexHyperGraph<D, N, E>
+// where
+//     N: Clone + Sync + Send + Hash + Eq + Debug + Default,
+//     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
+// {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+//         match self {
+//             ComplexHyperGraph::SubGraphs(subgraphs) => f
+//                 .debug_map()
+//                 .entries(subgraphs.iter().map(|(k, v)| (k, v)))
+//                 .finish(),
+//             ComplexHyperGraph::HyperGraph(hg) => hg.fmt(f),
+//         }
+//     }
+// }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Copy, Default)]
 pub struct Cell {
@@ -158,7 +155,7 @@ pub enum EdgeType {
     ParentChild,
 }
 
-fn split_cell<const D: usize>(graph: &mut LocalHyperGraph<D, Cell, EdgeType>, cell: &Cell) {
+fn split_cell(graph: &mut LocalHyperGraph<Cell, EdgeType>, cell: &Cell) {
     let half_width = cell.width / 2;
     let half_height = cell.height / 2;
 
@@ -192,7 +189,7 @@ fn split_cell<const D: usize>(graph: &mut LocalHyperGraph<D, Cell, EdgeType>, ce
     let cell_id = graph.nodes.iter().position(|n| n == cell).unwrap();
 
     for (i, child) in children.iter().enumerate() {
-        let child_id = D + i;
+        let child_id = i;
         graph.nodes[child_id] = child.clone();
 
         graph
@@ -201,16 +198,9 @@ fn split_cell<const D: usize>(graph: &mut LocalHyperGraph<D, Cell, EdgeType>, ce
     }
 }
 
-pub fn build_quadtree_2<const D: usize>(depth: usize) -> LocalHyperGraph<D, Cell, EdgeType> {
+pub fn build_quadtree_2(depth: usize) -> LocalHyperGraph<Cell, EdgeType> {
     let mut graph = LocalHyperGraph {
-        nodes: Box::new(
-            [Cell {
-                x: 0,
-                y: 0,
-                width: 10,
-                height: 10,
-            }; D],
-        ),
+        nodes: vec![Cell::default(); 4],
         edges: HashMap::new(),
     };
 
@@ -319,9 +309,9 @@ fn get_child_cells(cell: &Cell) -> Vec<Cell> {
 //     }
 // }
 
-pub fn build_quadtree_recursive<const D: usize>(
+pub fn build_quadtree_recursive(
     depth: usize,
-    graph: &mut LocalHyperGraph<D, Cell, EdgeType>,
+    graph: &mut LocalHyperGraph<Cell, EdgeType>,
     cell: Cell,
 ) {
     if depth == 0 {
@@ -340,11 +330,29 @@ pub fn build_quadtree_recursive<const D: usize>(
     }
 }
 
-// pub fn build_quadtree_3(depth: usize, root_cell: Cell) -> LocalHyperGraph<Cell, EdgeType> {
-//     let mut graph = LocalHyperGraph {
-//         nodes: vec![root_cell],
-//         edges: HashMap::new(),
-//     };
-//     build_quadtree_recursive(depth, &mut graph, root_cell);
-//     graph
-// }
+pub fn build_quadtree_3(depth: usize, root_cell: Cell) -> LocalHyperGraph<Cell, EdgeType> {
+    let mut graph = LocalHyperGraph {
+        nodes: vec![root_cell],
+        edges: HashMap::new(),
+    };
+    build_quadtree_recursive(depth, &mut graph, root_cell);
+    graph
+}
+
+pub fn draw_ascii(graph: &LocalHyperGraph<Cell, EdgeType>, max_depth: usize) {
+    let size = 1 << max_depth;
+    let mut canvas: Vec<Vec<char>> = vec![vec!['.'; size as usize]; size as usize];
+
+    for node in graph.nodes.iter() {
+        if node.width == 1 && node.height == 1 {
+            canvas[node.y as usize][node.x as usize] = 'x';
+        }
+    }
+
+    for y in 0..size {
+        for x in 0..size {
+            print!("{}", canvas[y as usize][x as usize]);
+        }
+        println!();
+    }
+}
