@@ -1,15 +1,12 @@
+pub mod haca_systems;
+
 use std::collections::HashMap;
 
-use gpca::haca::bregy::draw_ascii;
 use gpca::haca::haca::HyperGraph;
 use image::{ImageBuffer, Rgb, RgbImage};
 
 use rand::{thread_rng, Rng};
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
-
-use gpca::haca::bregy::{
-    build_quadtree_2, build_quadtree_3, build_quadtree_recursive, Cell, LocalHyperGraph,
-};
 
 macro_rules! box_array {
     ($val:expr ; $len:expr) => {{
@@ -147,17 +144,17 @@ async fn main() {
     // }
 
     // img.save("hca_game_of_life_test.png").unwrap();
-    let quadtree = build_quadtree_3(
-        3,
-        Cell {
-            x: 0,
-            y: 0,
-            width: 1000,
-            height: 1000,
-        },
-    );
+    // let quadtree = build_quadtree_3(
+    //     3,
+    //     Cell {
+    //         x: 0,
+    //         y: 0,
+    //         width: 1000,
+    //         height: 1000,
+    //     },
+    // );
 
-    println!("{:?}", quadtree);
+    // println!("{:?}", quadtree);
 
     // draw_ascii(&quadtree, 8);
 }
