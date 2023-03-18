@@ -1,15 +1,13 @@
-pub mod bregy;
-
 use std::collections::HashMap;
 
-use bregy::draw_ascii;
-use gpca::haca::HyperGraph;
+use gpca::haca::bregy::draw_ascii;
+use gpca::haca::haca::HyperGraph;
 use image::{ImageBuffer, Rgb, RgbImage};
 
 use rand::{thread_rng, Rng};
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::bregy::{
+use gpca::haca::bregy::{
     build_quadtree_2, build_quadtree_3, build_quadtree_recursive, Cell, LocalHyperGraph,
 };
 
