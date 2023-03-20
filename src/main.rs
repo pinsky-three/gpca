@@ -41,7 +41,7 @@ async fn main() {
     let mut graph = new_game_of_life_hyper_graph(mem);
 
     for _ in tqdm!(0..1000) {
-        graph.compute().await;
+        graph.compute_with_neighbors().await;
     }
 
     let mut img: RgbImage = ImageBuffer::new(W as u32, H as u32);

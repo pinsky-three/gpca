@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
+use dashmap::DashMap;
 use gpca::haca::local::{HyperEdge, Interaction, LocalHyperGraph};
+use rayon::vec;
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash, Copy)]
 pub struct LifeState(pub u8);
 
 impl Interaction<()> for LifeState {
-    fn interact(&self, nodes: &Vec<LifeState>, _: &HyperEdge<()>) -> LifeState {
+    fn interact(&self, nodes: &Vec<LifeState>, _: &Vec<HyperEdge<()>>) -> LifeState {
         let alive_neighbors = nodes.iter().filter(|&&n| n == LifeState(1)).count();
 
         if alive_neighbors == 2 {
@@ -24,12 +26,12 @@ pub fn new_game_of_life_hyper_graph<const D: usize>(
 ) -> LocalHyperGraph<D, LifeState, ()> {
     let n = f32::sqrt(nodes.len() as f32) as i32;
 
-    let mut neighbors = HashMap::<usize, (Vec<usize>, ())>::new();
+    let mut edges = HashMap::<usize, Vec<(Vec<usize>, ())>>::new();
 
     for i in 0..n {
         for j in 0..n {
             let index = i * n + j;
-            let mut local_neighborhood = Vec::<usize>::new();
+            let mut local_neighborhood = Vec::<(Vec<usize>, ())>::new();
 
             for x in vec![-1, 0, 1] {
                 for y in vec![-1, 0, 1] {
@@ -57,12 +59,12 @@ pub fn new_game_of_life_hyper_graph<const D: usize>(
 
                     let neighbor_index = dx * n + dy;
 
-                    local_neighborhood.push(neighbor_index as usize);
+                    local_neighborhood.push((vec![neighbor_index as usize], ()));
                 }
             }
 
-            neighbors.insert(index as usize, (local_neighborhood, ()));
+            edges.insert(index as usize, local_neighborhood);
         }
     }
-    LocalHyperGraph::new(nodes, neighbors)
+    LocalHyperGraph::new(nodes, edges)
 }
