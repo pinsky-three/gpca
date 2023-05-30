@@ -6,6 +6,14 @@ use rayon::prelude::{
 
 pub type HyperEdge<E> = Vec<(Vec<usize>, E)>;
 
+pub trait Interaction<E>
+where
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+    Self: Sized,
+{
+    fn interact(&self, nodes: &Vec<Self>, edges: &HyperEdge<E>) -> Self;
+}
+
 pub struct LocalHyperGraph<const D: usize, N, E>
 where
     N: Clone + Sync + Send + Hash + Eq + Interaction<E>,
@@ -65,26 +73,15 @@ where
 
         new_nodes.par_iter_mut().enumerate().for_each(|(i, node)| {
             let neighbors = self.node_neighbors.get(&i).unwrap().to_owned();
-            // let edges = self.edges.get(&i).unwrap();
-
             let neighbor_nodes = neighbors.iter().map(|i| self.nodes[*i]).collect::<Vec<N>>();
 
             *node = node.interact(&neighbor_nodes, &vec![]);
         });
 
-        // self.nodes = new_nodes.into_boxed_slice();
         self.nodes = new_nodes;
     }
 
     pub fn nodes(&self) -> &[N; D] {
         &self.nodes
     }
-}
-
-pub trait Interaction<E>
-where
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
-    Self: Sized,
-{
-    fn interact(&self, nodes: &Vec<Self>, edges: &Vec<HyperEdge<E>>) -> Self;
 }

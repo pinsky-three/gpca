@@ -1,14 +1,12 @@
 use std::collections::HashMap;
 
-use dashmap::DashMap;
 use gpca::haca::local::{HyperEdge, Interaction, LocalHyperGraph};
-use rayon::vec;
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash, Copy)]
 pub struct LifeState(pub u8);
 
 impl Interaction<()> for LifeState {
-    fn interact(&self, nodes: &Vec<LifeState>, _: &Vec<HyperEdge<()>>) -> LifeState {
+    fn interact(&self, nodes: &Vec<LifeState>, _: &HyperEdge<()>) -> LifeState {
         let alive_neighbors = nodes.iter().filter(|&&n| n == LifeState(1)).count();
 
         if alive_neighbors == 2 {
@@ -68,3 +66,5 @@ pub fn new_game_of_life_hyper_graph<const D: usize>(
     }
     LocalHyperGraph::new(nodes, edges)
 }
+
+pub fn new_game_of_life_hyper_graph_quad_tree_for_hash_life(size: usize) {}

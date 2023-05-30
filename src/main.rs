@@ -25,7 +25,7 @@ macro_rules! box_array {
 
 #[tokio::main]
 async fn main() {
-    const W: usize = 2048;
+    const W: usize = 512;
     const H: usize = W;
 
     let mut mem = box_array![LifeState(0); W * H];
@@ -46,7 +46,7 @@ async fn main() {
 
     let mut img: RgbImage = ImageBuffer::new(W as u32, H as u32);
 
-    let copy_mem = graph.nodes().clone();
+    let copy_mem = *graph.nodes();
 
     for y in 0..H {
         for x in 0..W {
