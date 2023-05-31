@@ -36,8 +36,7 @@ where
     pub fn edges(&self) -> Vec<E> {
         // &[E]
         self.node_neighbors
-            .iter()
-            .map(|(_, v)| v)
+            .values()
             .flatten()
             .map(|(_, e)| e)
             .unique()
@@ -67,10 +66,10 @@ where
 
             let nodes_values = nodes_indexes
                 .iter()
-                .map(|i| self.nodes[(*i).0].to_owned())
+                .map(|i| self.nodes[i.0].to_owned())
                 .collect::<Vec<N>>();
 
-            let node_with_neighbors = (node.clone(), nodes_values.clone());
+            let node_with_neighbors = (*node, nodes_values.clone());
 
             // Check if the node with its neighbors is memoized
             if let Some(new_node) = self.memoization.get(&node_with_neighbors) {
@@ -98,7 +97,7 @@ where
 
             let nodes_values = nodes_indexes
                 .iter()
-                .map(|i| self.nodes[(*i).0].to_owned())
+                .map(|i| self.nodes[i.0].to_owned())
                 .collect::<Vec<_>>();
 
             *node = update(node, &nodes_values);

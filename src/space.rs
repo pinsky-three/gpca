@@ -3,7 +3,7 @@ pub trait DiscreteSpace<const D: usize> {
     fn size(&self) -> [usize; D];
 
     fn read_state(&self) -> Vec<u32>;
-    fn write_state(&mut self, state: &Vec<u32>);
+    fn write_state(&mut self, state: &[u32]);
     fn update_state(&mut self, updater: &mut dyn for<'a> FnMut(&'a mut Vec<u32>)) {
         let mut s = self.read_state();
         updater(&mut s);
@@ -33,6 +33,12 @@ impl<const X: usize> OneDimensional<X> {
     }
 }
 
+impl<const X: usize> Default for OneDimensional<X> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct TwoDimensional<const X: usize, const Y: usize> {
     space: Box<[[u32; X]; Y]>,
@@ -49,6 +55,12 @@ impl<const X: usize, const Y: usize> TwoDimensional<X, Y> {
         Self {
             space: Box::new(state),
         }
+    }
+}
+
+impl<const X: usize, const Y: usize> Default for TwoDimensional<X, Y> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -70,7 +82,7 @@ impl<const X: usize> DiscreteSpace<1> for OneDimensional<X> {
         self.space.to_vec()
     }
 
-    fn write_state(&mut self, state: &Vec<u32>) {
+    fn write_state(&mut self, state: &[u32]) {
         self.space = state.to_vec().as_slice().try_into().unwrap();
     }
 }
@@ -88,12 +100,11 @@ impl<const X: usize, const Y: usize> DiscreteSpace<2> for TwoDimensional<X, Y> {
         self.space
             .to_vec()
             .iter()
-            .map(|r| r.to_vec())
-            .flatten()
+            .flat_map(|r| r.to_vec())
             .collect::<Vec<u32>>()
     }
 
-    fn write_state(&mut self, state: &Vec<u32>) {
+    fn write_state(&mut self, state: &[u32]) {
         self.space = Box::new(
             state
                 .to_vec()
@@ -118,18 +129,16 @@ impl<const X: usize, const Y: usize, const Z: usize> DiscreteSpace<3>
         self.space
             .to_vec()
             .iter()
-            .map(|r| {
+            .flat_map(|r| {
                 r.to_vec()
                     .iter()
-                    .map(|c| c.to_vec())
-                    .flatten()
+                    .flat_map(|c| c.to_vec())
                     .collect::<Vec<u32>>()
             })
-            .flatten()
             .collect::<Vec<u32>>()
     }
 
-    fn write_state(&mut self, state: &Vec<u32>) {
+    fn write_state(&mut self, state: &[u32]) {
         self.space = state
             .to_vec()
             .chunks(X * Y)

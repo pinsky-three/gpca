@@ -7,11 +7,11 @@ edition = "2021"
 
 [dependencies]
 dashmap = "5.4.0"
-image = "0.24.5"
+image = "0.24.6"
 itertools = "0.10.5"
 kdam = "0.3.0"
 rand = "0.8.5"
 rayon = "1.7.0"
-tokio = { version="1.26.0", features = ["full"] }
+tokio = { version="1.28.2", features = ["full"] }
 
 

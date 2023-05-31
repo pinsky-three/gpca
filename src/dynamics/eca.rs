@@ -22,7 +22,7 @@ impl<const X: usize> ElementaryCellularAutomaton<OneDimensional<X>> {
     pub fn new_from_number(rule: u32) -> Self {
         let mut rule_array = [0; 8];
 
-        for i in 0..8 {
+        for (i, _) in rule_array.clone().iter_mut().enumerate() {
             rule_array[i] = (rule >> i) & 1;
         }
 
@@ -37,7 +37,7 @@ impl<const X: usize> Dynamic<1, OneDimensional<X>>
         2
     }
 
-    fn update(&self, input: &Vec<u32>) -> Vec<u32> {
+    fn update(&self, input: &[u32]) -> Vec<u32> {
         let mut output: Vec<u32> = Vec::new();
 
         for i in 0..input.len() {

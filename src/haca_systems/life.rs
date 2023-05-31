@@ -6,7 +6,7 @@ use gpca::haca::local::{HyperEdge, Interaction, LocalHyperGraph};
 pub struct LifeState(pub u8);
 
 impl Interaction<()> for LifeState {
-    fn interact(&self, nodes: &Vec<LifeState>, _: &HyperEdge<()>) -> LifeState {
+    fn interact(&self, nodes: &[LifeState], _: &HyperEdge<()>) -> LifeState {
         let alive_neighbors = nodes.iter().filter(|&&n| n == LifeState(1)).count();
 
         if alive_neighbors == 2 {
@@ -31,8 +31,8 @@ pub fn new_game_of_life_hyper_graph<const D: usize>(
             let index = i * n + j;
             let mut local_neighborhood = Vec::<(Vec<usize>, ())>::new();
 
-            for x in vec![-1, 0, 1] {
-                for y in vec![-1, 0, 1] {
+            for x in [-1, 0, 1] {
+                for y in [-1, 0, 1] {
                     if x == 0 && y == 0 {
                         continue;
                     }
@@ -67,4 +67,4 @@ pub fn new_game_of_life_hyper_graph<const D: usize>(
     LocalHyperGraph::new(nodes, edges)
 }
 
-pub fn new_game_of_life_hyper_graph_quad_tree_for_hash_life(size: usize) {}
+pub fn new_game_of_life_hyper_graph_quad_tree_for_hash_life(_size: usize) {}

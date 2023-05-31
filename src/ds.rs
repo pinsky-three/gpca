@@ -62,7 +62,7 @@ impl<const D: usize, S: DiscreteSpace<D>, F: Dynamic<D, S>> DynamicalSystem<D, S
     //     &self.space
     // }
 
-    pub fn space(&mut self) -> &Box<S> {
+    pub fn space(&mut self) -> &S {
         &self.space
     }
 

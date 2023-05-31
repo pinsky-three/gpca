@@ -29,7 +29,7 @@ impl<const X: usize, const Y: usize> Dynamic<2, TwoDimensional<X, Y>>
         2
     }
 
-    fn update(&self, input: &Vec<u32>) -> Vec<u32> {
+    fn update(&self, input: &[u32]) -> Vec<u32> {
         let mut output: Vec<u32> = input.to_vec();
 
         for x in 0..X as i32 {

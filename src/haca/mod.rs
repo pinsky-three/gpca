@@ -1,2 +1,2 @@
-pub mod haca;
+pub mod hyper_graph;
 pub mod local;
