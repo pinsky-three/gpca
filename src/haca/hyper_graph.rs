@@ -34,7 +34,6 @@ where
     }
 
     pub fn edges(&self) -> Vec<E> {
-        // &[E]
         self.node_neighbors
             .values()
             .flatten()
@@ -42,14 +41,13 @@ where
             .unique()
             .map(|e| e.to_owned())
             .collect::<Vec<E>>()
-        // .as_slice()
     }
 
     pub fn neighbors(&self, node: &usize) -> Vec<(usize, E)> {
         self.node_neighbors.get(node).unwrap().to_owned()
     }
 
-    pub async fn run_hashlife(&mut self, generations: usize, update: &HyperGraphDynamic<N>) {
+    pub async fn run_hash_life(&mut self, generations: usize, update: &HyperGraphDynamic<N>) {
         for _ in tqdm!(0..generations) {
             self.update_nodes_by_neighborhood(update).await;
         }

@@ -28,7 +28,9 @@ async fn main() {
     const W: usize = 512;
     const H: usize = W;
 
-    let mut mem = box_array![LifeState(0); W * H];
+    const WH: usize = W * H;
+
+    let mut mem = box_array![LifeState(0); WH];
 
     mem.par_iter_mut().for_each(|x| {
         *x = if thread_rng().gen_bool(0.5) {
