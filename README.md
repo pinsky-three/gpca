@@ -1,6 +1,6 @@
 # General Purpose Cellular Automata
 
-This is a computational model inspired in the concurrent computational models like cellular automata and other local based system, also this model takes inspiration from the formalism of dynamical systems and the theory of computation. This model is a generalization of the async cellular automata model, in the sense that the cells can have any number of states and the neighborhood can be any hyper-graph and updates are not necessarily synchronous.
+This computational model draws inspiration from concurrent computational models, notably cellular automata and other locality-based systems. Additionally, it incorporates elements from the formalism of dynamical systems and the broader theory of computation. Distinguishing itself as an advanced version of the asynchronous cellular automata model, this system allows cells to possess an arbitrary number of states. Furthermore, the neighborhood can be represented by any hyper-graph, and updates are not strictly synchronous.
 
 A actual implementation of the model is the following:
 
