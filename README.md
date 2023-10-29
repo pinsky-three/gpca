@@ -1,5 +1,9 @@
 # General Purpose Cellular Automata
 
+```
+cargo run --release --example visualization
+```
+
 This computational model draws inspiration from concurrent computational models, notably cellular automata and other locality-based systems. Additionally, it incorporates elements from the formalism of dynamical systems and the broader theory of computation. Distinguishing itself as an advanced version of the asynchronous cellular automata model, this system allows cells to possess an arbitrary number of states. Furthermore, the neighborhood can be represented by any hyper-graph, and updates are not strictly synchronous.
 
 ```rust

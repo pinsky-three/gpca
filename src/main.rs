@@ -25,7 +25,7 @@ macro_rules! box_array {
 
 #[tokio::main]
 async fn main() {
-    const W: usize = 512;
+    const W: usize = 2048;
     const H: usize = W;
 
     const WH: usize = W * H;
