@@ -30,6 +30,7 @@ async fn main() {
     // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
     // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
     // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
 
     loop {
         (nodes, edges) = evolve_system(nodes, edges, &mut graph);
@@ -70,23 +71,50 @@ fn evolve_system(
             }
 
             [e1, e2] => {
-                let n_node = e1.target();
-                let s_node = e2.target();
+                // let n_node = e1.target();
+                // let s_node = e2.target();
 
-                let right = graph.add_force_node("right", ());
-                let bottom = graph.add_force_node("bottom", ());
+                // let right = graph.add_force_node("right", ());
+                // let bottom = graph.add_force_node("bottom", ());
                 let diagonal = graph.add_force_node("diagonal", ());
 
-                graph.add_edge(node, right, ());
-                graph.add_edge(node, bottom, ());
+                // graph.add_edge(node, right, ());
+                // graph.add_edge(node, bottom, ());
 
-                graph.add_edge(diagonal, right, ());
-                graph.add_edge(diagonal, bottom, ());
+                // graph.add_edge(diagonal, right, ());
+                // graph.add_edge(diagonal, bottom, ());
 
-                graph.add_edge(n_node, right, ());
-                graph.add_edge(s_node, bottom, ());
+                // graph.add_edge(n_node, right, ());
+                // graph.add_edge(s_node, bottom, ());
+
+                graph.add_edge(node, diagonal, ());
             }
 
+            [e1, e2, e3] => {
+                let n1_node = e1.target();
+                let n2_node = e2.target();
+                let n3_node = e3.target();
+
+                let diagonal = graph.add_force_node("diagonal", ());
+
+                graph.add_edge(n1_node, diagonal, ());
+                graph.add_edge(n2_node, diagonal, ());
+                graph.add_edge(n3_node, node, ());
+
+                // let right = graph.add_force_node("right", ());
+                // let bottom = graph.add_force_node("bottom", ());
+                // let diagonal = graph.add_force_node("diagonal", ());
+
+                // graph.add_edge(node, right, ());
+                // graph.add_edge(node, bottom, ());
+
+                // graph.add_edge(diagonal, right, ());
+                // graph.add_edge(diagonal, bottom, ());
+
+                // graph.add_edge(n_node, right, ());
+                // graph.add_edge(s_node, bottom, ());
+                // graph.add_edge(e_node, diagonal, ());
+            }
             _ => {
                 // println!("nothing");
             }
