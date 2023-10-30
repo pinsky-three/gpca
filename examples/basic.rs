@@ -11,64 +11,33 @@ use fdg_sim::{
     },
     ForceGraph, ForceGraphHelper,
 };
+use gpca::third;
 
 #[macroquad::main("Lattice Graph")]
 async fn main() {
     let mut graph: ForceGraph<(), ()> = ForceGraph::default();
-    let mut indices: Vec<NodeIndex> = Vec::new();
+    // let mut indices: Vec<NodeIndex> = Vec::new();
 
-    let n_s = next_state(0, vec![]);
-    println!("{:?}", n_s);
+    // let n_s = next_state(0, vec![]);
+    // println!("{:?}", n_s);
 
-    let current_node = graph.add_force_node(format!("1"), ());
+    graph.add_force_node("origin", ());
 
-    for (node_identifier, edges) in n_s {
-        match node_identifier {
-            CURRENT_NODE => println!("CURRENT_NODE"),
-            NEW_NODE => {
-                let new_node = graph.add_force_node("name", ());
+    let nodes = graph.node_indices().collect();
+    let edges = graph.edge_indices().collect();
 
-                for edge in edges {
-                    // if edge
-                    // graph.add_edge(a, b, weight)
-                }
+    let (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    let (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    // let (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    // let (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    // let (nodes, edges) = evolve_system(nodes, edges, &mut graph);
 
-                // graph.add_edge(current_node, new_node)
-            }
-            _ => println!("OTHER"),
-        }
-    }
-}
-
-// const O: usize = 0;
-
-const CURRENT_NODE: usize = 0;
-const NEW_NODE: usize = 1;
-
-fn next_state(_node: usize, edges: Vec<usize>) -> Vec<(usize, Vec<usize>)> {
-    // match (node, edges[..]) {
-
-    match edges[..] {
-        [] => vec![
-            (NEW_NODE, vec![CURRENT_NODE, 1]),
-            (NEW_NODE, vec![CURRENT_NODE, 2]),
-            (NEW_NODE, vec![CURRENT_NODE, 3]),
-            (NEW_NODE, vec![CURRENT_NODE, 4]),
-        ],
-        [1, 2, 3, 4] => vec![
-            (NEW_NODE, vec![1, 2]),
-            (NEW_NODE, vec![2, 3]),
-            (NEW_NODE, vec![1, 4]),
-            (NEW_NODE, vec![3, 4]),
-        ],
-        [1, 2, 3] => vec![(NEW_NODE, vec![CURRENT_NODE, 4])],
-        _ => vec![(0, vec![])],
-    }
+    third::fdg_macroquad::run_window(&graph).await;
 }
 
 fn evolve_system(
     nodes: Vec<NodeIndex>,
-    edges: Vec<EdgeIndex>,
+    _edges: Vec<EdgeIndex>,
     graph: &mut ForceGraph<(), ()>,
 ) -> (Vec<NodeIndex>, Vec<EdgeIndex>) {
     for node in nodes {
@@ -77,18 +46,36 @@ fn evolve_system(
         let edges = graph_clone.edges(node);
 
         // let total_edges = edges.clone().count();
+        let collected_edges = edges.collect::<Vec<EdgeReference<'_, ()>>>();
 
-        match edges.collect::<Vec<EdgeReference<'_, ()>>>()[..] {
+        match collected_edges[..] {
             [] => {
-                let n1 = graph.add_force_node("n", ());
-                let n2 = graph.add_force_node("s", ());
-                let n3 = graph.add_force_node("e", ());
-                let n4 = graph.add_force_node("w", ());
+                let n = graph.add_force_node("n", ());
+                let s = graph.add_force_node("s", ());
+                let e = graph.add_force_node("e", ());
+                let w = graph.add_force_node("w", ());
 
-                graph.add_edge(node, n1, ());
-                graph.add_edge(node, n2, ());
-                graph.add_edge(node, n3, ());
-                graph.add_edge(node, n4, ());
+                graph.add_edge(node, n, ());
+                graph.add_edge(node, s, ());
+                graph.add_edge(node, e, ());
+                graph.add_edge(node, w, ());
+            }
+            [e1, e2] => {
+                println!("corner");
+                let n1 = graph.add_force_node("corner", ());
+
+                let l1 = e1.target();
+                let l2 = e2.target();
+
+                graph.add_edge(l1, n1, ());
+                graph.add_edge(n1, l2, ());
+            }
+            [e1, e2, e3] => {
+                let n1 = graph.add_force_node("extension", ());
+
+                let current_node = e1.source();
+
+                graph.add_edge(current_node, n1, ());
             }
             [e1, e2, e3, e4] => {
                 let n1 = graph.add_force_node("nw", ());
@@ -112,13 +99,6 @@ fn evolve_system(
 
                 graph.add_edge(s_node, n4, ());
                 graph.add_edge(n4, w_node, ());
-            }
-            [e1, e2, e3] => {
-                let n1 = graph.add_force_node("extension", ());
-
-                let current_node = e1.source();
-
-                graph.add_edge(current_node, n1, ());
             }
             _ => {
                 println!("nothing");
