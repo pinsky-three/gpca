@@ -60,7 +60,7 @@ impl<N, E> Default for ApplicationState<N, E> {
             show_nodes: true,
             show_edges: true,
             show_grid: true,
-            node_size: 5.0,
+            node_size: 3.0,
             edge_size: 1.5,
             view_angle: 0.0,
             view_radius: 200.0,
@@ -94,7 +94,8 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
         loop {
             // clear the background
             clear_background(if self.dark_mode {
-                Color::from_rgba(15, 23, 42, 255)
+                Color::from_rgba(0, 0, 0, 255)
+                // Color::from_rgba(13, 19, 33, 255)
             } else {
                 LIGHTGRAY
             });
@@ -204,7 +205,7 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
                         target.location.x,
                         target.location.y,
                         self.edge_size,
-                        RED,
+                        get_edge_color(self.dark_mode),
                     );
                 });
             }
@@ -281,7 +282,7 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
                     draw_line_3d(
                         glam_to_macroquad_vec3(source.location),
                         glam_to_macroquad_vec3(target.location),
-                        RED,
+                        get_edge_color(self.dark_mode),
                     );
                 });
             }
@@ -477,10 +478,15 @@ pub async fn run_window<N: Clone, E: Clone>(graph: &ForceGraph<N, E>) {
     window.run().await;
 }
 
-fn get_node_color(dark: bool) -> Color {
-    let color: u8 = if dark { 255 } else { 0 };
+fn get_node_color(_dark: bool) -> Color {
+    // let color: u8 = if dark { 255 } else { 0 };
 
-    Color::from_rgba(color, color, color, 255)
+    // Color::from_rgba(color, color, color, 255)
+    Color::from_rgba(251, 133, 0, 255)
+}
+
+fn get_edge_color(_dark: bool) -> Color {
+    Color::from_rgba(252, 163, 17, 255)
 }
 
 fn glam_to_macroquad_vec3(v: fdg_sim::glam::Vec3) -> macroquad::math::Vec3 {

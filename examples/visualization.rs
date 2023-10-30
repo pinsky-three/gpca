@@ -1,43 +1,31 @@
-#![allow(unused_parens)]
-
 use fdg_sim::{petgraph::graph::NodeIndex, ForceGraph, ForceGraphHelper};
 use gpca::third;
 
-#[macroquad::main("Force Graph Sphere Demo")]
+#[macroquad::main("Lattice Graph")]
 async fn main() {
     let mut graph: ForceGraph<(), ()> = ForceGraph::default();
     let mut indices: Vec<NodeIndex> = Vec::new();
 
-    let height = 10;
-    let width = 50;
+    let size = 60;
 
-    for x in 0..width {
-        for y in 0..height {
-            indices.push(graph.add_force_node(format!("x: {x}, y: {y}"), ()));
+    for x in 0..size {
+        for y in 0..size {
+            let node = graph.add_force_node(format!("{x},{y}"), ());
+
+            indices.push(node);
         }
     }
 
-    let top = graph.add_force_node("top", ());
-    let bottom = graph.add_force_node("bottom", ());
-
-    for y in 0..height {
-        for x in 0..width {
+    for y in 0..size {
+        for x in 0..size {
             if x != 0 {
-                graph.add_edge(indices[(width * y) + x], indices[((width * y) + x) - 1], ());
+                graph.add_edge(indices[(size * y) + x], indices[((size * y) + x) - 1], ());
             }
 
             if y != 0 {
-                graph.add_edge(indices[(width * y) + x], indices[(width * (y - 1)) + x], ());
+                graph.add_edge(indices[(size * y) + x], indices[(size * (y - 1)) + x], ());
             }
         }
-
-        // cylinder
-        graph.add_edge(indices[(width * y) + (width - 1)], indices[(width * y)], ());
-    }
-
-    for x in 0..width {
-        graph.add_edge(indices[(width * (height - 1)) + x], top, ());
-        graph.add_edge(indices[x], bottom, ());
     }
 
     third::fdg_macroquad::run_window(&graph).await;
