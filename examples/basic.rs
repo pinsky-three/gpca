@@ -26,6 +26,11 @@ async fn main() {
     let mut nodes = graph.node_indices().collect();
     let mut edges = graph.edge_indices().collect();
 
+    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+
     loop {
         (nodes, edges) = evolve_system(nodes, edges, &mut graph);
         if nodes.len() > 1000 {
@@ -53,78 +58,33 @@ fn evolve_system(
 
         match collected_edges[..] {
             [] => {
-                let n = graph.add_force_node("n", ());
-                let s = graph.add_force_node("s", ());
-                let e = graph.add_force_node("e", ());
-                let w = graph.add_force_node("w", ());
+                let right = graph.add_force_node("right", ());
+                let bottom = graph.add_force_node("bottom", ());
+                let diagonal = graph.add_force_node("diagonal", ());
 
-                graph.add_edge(node, n, ());
-                graph.add_edge(node, s, ());
-                graph.add_edge(node, e, ());
-                graph.add_edge(node, w, ());
+                graph.add_edge(node, right, ());
+                graph.add_edge(node, bottom, ());
+
+                graph.add_edge(diagonal, right, ());
+                graph.add_edge(diagonal, bottom, ());
             }
 
-            [e1, e2, e3, e4] => {
-                // println!(".., 4");
-
+            [e1, e2] => {
                 let n_node = e1.target();
                 let s_node = e2.target();
-                let e_node = e3.target();
-                let w_node = e4.target();
 
-                // if graph.edges(n_node).count() > 3
-                //     || graph.edges(s_node).count() > 3
-                //     || graph.edges(e_node).count() > 3
-                //     || graph.edges(w_node).count() > 3
-                // {
-                //     continue;
-                // }
+                let right = graph.add_force_node("right", ());
+                let bottom = graph.add_force_node("bottom", ());
+                let diagonal = graph.add_force_node("diagonal", ());
 
-                let max_neighbors = 3;
+                graph.add_edge(node, right, ());
+                graph.add_edge(node, bottom, ());
 
-                if graph.edges(n_node).count() < max_neighbors {
-                    let n1 = graph.add_force_node("nw", ());
+                graph.add_edge(diagonal, right, ());
+                graph.add_edge(diagonal, bottom, ());
 
-                    graph.add_edge(n_node, n1, ());
-                    graph.add_edge(n1, w_node, ());
-                };
-
-                if graph.edges(s_node).count() < max_neighbors {
-                    let n2 = graph.add_force_node("ne", ());
-
-                    graph.add_edge(n_node, n2, ());
-                    graph.add_edge(n2, e_node, ());
-                }
-
-                if graph.edges(e_node).count() < max_neighbors {
-                    let n3 = graph.add_force_node("se", ());
-
-                    graph.add_edge(s_node, n3, ());
-                    graph.add_edge(n3, e_node, ());
-                }
-
-                if graph.edges(w_node).count() < max_neighbors {
-                    let n4 = graph.add_force_node("sw", ());
-
-                    graph.add_edge(s_node, n4, ());
-                    graph.add_edge(n4, w_node, ());
-                }
-            }
-
-            [e1, e2, e3] => {
-                let current_node = e1.source();
-
-                // let l1 = graph.edges(e1.target()).count();
-                // let l2 = graph.edges(e2.target()).count();
-                // let l3 = graph.edges(e3.target()).count();
-
-                // if l1 > 5 || l2 > 5 || l3 > 5 {
-                //     continue;
-                // }
-
-                let n1 = graph.add_force_node("extension", ());
-
-                graph.add_edge(current_node, n1, ());
+                graph.add_edge(n_node, right, ());
+                graph.add_edge(s_node, bottom, ());
             }
 
             _ => {
