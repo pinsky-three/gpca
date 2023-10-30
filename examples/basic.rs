@@ -31,6 +31,10 @@ async fn main() {
     // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
     // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
     // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
+    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
 
     loop {
         (nodes, edges) = evolve_system(nodes, edges, &mut graph);
@@ -55,7 +59,7 @@ fn evolve_system(
         // let total_edges = edges.clone().count();
         let collected_edges = edges.collect::<Vec<EdgeReference<'_, ()>>>();
 
-        // println!("{node:?} {:?}", collected_edges.len());
+        println!("{node:?} {:?}", collected_edges.len());
 
         match collected_edges[..] {
             [] => {
@@ -93,13 +97,14 @@ fn evolve_system(
             [e1, e2, e3] => {
                 let n1_node = e1.target();
                 let n2_node = e2.target();
-                let n3_node = e3.target();
+                // let n3_node = e3.target();
 
                 let diagonal = graph.add_force_node("diagonal", ());
 
-                graph.add_edge(n1_node, diagonal, ());
-                graph.add_edge(n2_node, diagonal, ());
-                graph.add_edge(n3_node, node, ());
+                // graph.add_edge(node, diagonal, ());
+                graph.add_edge(diagonal, n1_node, ());
+                graph.add_edge(diagonal, n2_node, ());
+                // graph.add_edge(n2_node, node, ());
 
                 // let right = graph.add_force_node("right", ());
                 // let bottom = graph.add_force_node("bottom", ());
@@ -115,6 +120,52 @@ fn evolve_system(
                 // graph.add_edge(s_node, bottom, ());
                 // graph.add_edge(e_node, diagonal, ());
             }
+            [e1, e2, e3, e4] => {
+                let n_node = e1.target();
+                let s_node = e2.target();
+                let e_node = e3.target();
+                let w_node = e4.target();
+
+                let max_neighbors = 2;
+
+                if graph.edges(n_node).count() < max_neighbors {
+                    let n1 = graph.add_force_node("nw", ());
+
+                    graph.add_edge(n_node, n1, ());
+                    graph.add_edge(n1, w_node, ());
+                };
+
+                if graph.edges(s_node).count() < max_neighbors {
+                    let n2 = graph.add_force_node("ne", ());
+
+                    graph.add_edge(n_node, n2, ());
+                    graph.add_edge(n2, e_node, ());
+                }
+
+                if graph.edges(e_node).count() < max_neighbors {
+                    let n3 = graph.add_force_node("se", ());
+
+                    graph.add_edge(s_node, n3, ());
+                    graph.add_edge(n3, e_node, ());
+                }
+
+                if graph.edges(w_node).count() < max_neighbors {
+                    let n4 = graph.add_force_node("sw", ());
+
+                    graph.add_edge(s_node, n4, ());
+                    graph.add_edge(n4, w_node, ());
+                }
+
+                // let diagonal = graph.add_force_node("diagonal", ());
+
+                // graph.add_edge(n_node, diagonal, ());
+                // graph.add_edge(s_node, diagonal, ());
+                // graph.add_edge(e_node, s_node, ());
+            }
+            // [e1] => {
+            //     graph.remove_node(node);
+            //     graph.remove_edge(e1.id());
+            // }
             _ => {
                 // println!("nothing");
             }
