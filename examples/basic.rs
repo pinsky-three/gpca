@@ -74,7 +74,6 @@ fn evolve_system(
                 graph.add_edge(n1, ext_1, ());
                 graph.add_edge(n2, ext_2, ());
             }
-
             [e1, e2, e3] => {
                 let down = graph.add_force_node("down", ());
 
@@ -92,15 +91,14 @@ fn evolve_system(
                 graph.add_edge(n2, corner_b, ());
                 graph.add_edge(n3, corner_b, ());
             }
-
             [e1, e2, e3, e4] => {
-                let left = graph.add_force_node("left", ());
-
-                graph.add_edge(node, left, ());
+                // let left = graph.add_force_node("left", ());
+                // graph.add_edge(node, left, ());
 
                 let corner_a = graph.add_force_node("corner_a", ());
                 let corner_b = graph.add_force_node("corner_b", ());
                 let corner_c = graph.add_force_node("corner_c", ());
+                let corner_d = graph.add_force_node("corner_d", ());
 
                 let n1 = e1.target();
                 let n2 = e2.target();
@@ -113,6 +111,8 @@ fn evolve_system(
                 graph.add_edge(n3, corner_b, ());
                 graph.add_edge(n3, corner_c, ());
                 graph.add_edge(n4, corner_c, ());
+                graph.add_edge(n4, corner_d, ());
+                graph.add_edge(n1, corner_d, ());
             }
 
             _ => {
