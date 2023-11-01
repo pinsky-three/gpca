@@ -1,5 +1,5 @@
 use fdg_sim::{petgraph::graph::NodeIndex, ForceGraph, ForceGraphHelper};
-use gpca::third;
+use gpca::third::{self, fdg_macroquad::VisualizationSettings};
 
 #[macroquad::main("Lattice Graph")]
 async fn main() {
@@ -28,5 +28,5 @@ async fn main() {
         }
     }
 
-    third::fdg_macroquad::run_window(&graph).await;
+    third::fdg_macroquad::run_window(&graph, VisualizationSettings::default()).await;
 }

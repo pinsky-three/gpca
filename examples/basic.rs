@@ -1,37 +1,21 @@
-// use image::{ImageBuffer, Rgb, RgbImage};
-
-// use kdam::tqdm;
-// use rand::{thread_rng, Rng};
-// use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
-
 use fdg_sim::{
     petgraph::{
         stable_graph::{EdgeIndex, EdgeReference, NodeIndex},
-        visit::{EdgeRef, IntoEdges, NodeCount},
+        visit::EdgeRef,
     },
     ForceGraph, ForceGraphHelper,
 };
-use gpca::third;
+use gpca::third::{self, fdg_macroquad::VisualizationSettings};
+use macroquad::prelude::Color;
 
 #[macroquad::main("Lattice Graph")]
 async fn main() {
     let mut graph: ForceGraph<(), ()> = ForceGraph::default();
-    // let mut indices: Vec<NodeIndex> = Vec::new();
-
-    // let n_s = next_state(0, vec![]);
-    // println!("{:?}", n_s);
 
     graph.add_force_node("origin", ());
 
     let mut nodes = graph.node_indices().collect();
     let mut edges = graph.edge_indices().collect();
-
-    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
-    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
-    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
-    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
-    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
-    // (nodes, edges) = evolve_system(nodes, edges, &mut graph);
 
     loop {
         (nodes, edges) = evolve_system(nodes, edges, &mut graph);
@@ -40,7 +24,12 @@ async fn main() {
         }
     }
 
-    third::fdg_macroquad::run_window(&graph).await;
+    let settings = VisualizationSettings {
+        node_color: |_node| Color::from_rgba(255, 255, 255, 255),
+        ..Default::default()
+    };
+
+    third::fdg_macroquad::run_window(&graph, settings).await;
 }
 
 fn evolve_system(
@@ -48,29 +37,18 @@ fn evolve_system(
     _edges: Vec<EdgeIndex>,
     graph: &mut ForceGraph<(), ()>,
 ) -> (Vec<NodeIndex>, Vec<EdgeIndex>) {
-    for node in nodes {
-        // for each node
-        let graph_clone = graph.clone();
-        let edges = graph_clone.edges(node);
+    let graph_clone = graph.clone();
 
-        // let total_edges = edges.clone().count();
-        let collected_edges = edges.collect::<Vec<EdgeReference<'_, ()>>>();
+    // for each node
+    for node in nodes {
+        // get neighbors
+        let collected_edges: Vec<EdgeReference<'_, ()>> = graph_clone.edges(node).collect();
 
         println!("{node:?} {:?}", collected_edges.len());
 
         match collected_edges[..] {
             [] => {
-                // let right = graph.add_force_node("right", ());
-                // let bottom = graph.add_force_node("bottom", ());
-                // let diagonal = graph.add_force_node("diagonal", ());
-
-                // graph.add_edge(node, right, ());
-                // graph.add_edge(node, bottom, ());
-
-                // graph.add_edge(diagonal, right, ());
-                // graph.add_edge(diagonal, bottom, ());
-
-                let n_node = graph.add_force_node("ext", ());
+                let n_node = graph.add_force_node("ext_0", ());
 
                 graph.add_edge(node, n_node, ());
             }
@@ -78,102 +56,65 @@ fn evolve_system(
             [e1] => {
                 let n_node = e1.source();
 
-                let right = graph.add_force_node("right", ());
+                let right = graph.add_force_node("ext_i", ());
 
                 graph.add_edge(right, n_node, ());
             }
             [e1, e2] => {
-                // let n_node = e1.target();
-                // let s_node = e2.target();
+                let up = graph.add_force_node("up", ());
 
-                // let right = graph.add_force_node("right", ());
-                // let bottom = graph.add_force_node("bottom", ());
-                let diagonal = graph.add_force_node("diagonal", ());
+                graph.add_edge(node, up, ());
 
-                graph.add_edge(node, diagonal, ());
-                // graph.add_edge(node, bottom, ());
+                let ext_1 = graph.add_force_node("ext_a", ());
+                let ext_2 = graph.add_force_node("ext_b", ());
 
-                // graph.add_edge(diagonal, right, ());
-                // graph.add_edge(diagonal, bottom, ());
+                let n1 = e1.target();
+                let n2 = e2.target();
 
-                // graph.add_edge(n_node, right, ());
-                // graph.add_edge(s_node, bottom, ());
-
-                // graph.add_edge(node, diagonal, ());
+                graph.add_edge(n1, ext_1, ());
+                graph.add_edge(n2, ext_2, ());
             }
 
             [e1, e2, e3] => {
-                // let n1_node = e1.target();
-                // let n2_node = e2.target();
-                // let n3_node = e3.target();
+                let down = graph.add_force_node("down", ());
 
-                let diagonal = graph.add_force_node("diagonal", ());
+                graph.add_edge(node, down, ());
 
-                // graph.add_edge(node, diagonal, ());
-                // graph.add_edge(diagonal, n1_node, ());
-                // graph.add_edge(diagonal, n2_node, ());
-                // graph.add_edge(n2_node, node, ());
+                let corner_a = graph.add_force_node("corner_a", ());
+                let corner_b = graph.add_force_node("corner_b", ());
 
-                // let right = graph.add_force_node("right", ());
-                // let bottom = graph.add_force_node("bottom", ());
-                // let diagonal = graph.add_force_node("diagonal", ());
+                let n1 = e1.target();
+                let n2 = e2.target();
+                let n3 = e3.target();
 
-                // graph.add_edge(node, right, ());
-                // graph.add_edge(node, bottom, ());
-
-                graph.add_edge(node, diagonal, ());
-                // graph.add_edge(diagonal, bottom, ());
-
-                // graph.add_edge(n_node, right, ());
-                // graph.add_edge(s_node, bottom, ());
-                // graph.add_edge(e_node, diagonal, ());
+                graph.add_edge(n1, corner_a, ());
+                graph.add_edge(n2, corner_a, ());
+                graph.add_edge(n2, corner_b, ());
+                graph.add_edge(n3, corner_b, ());
             }
-            // [e1, e2, e3, e4] => {
-            //     let n_node = e1.target();
-            //     let e_node = e2.target();
-            //     let s_node = e3.target();
-            //     let w_node = e4.target();
 
-            //     // let max_neighbors = 4;
+            [e1, e2, e3, e4] => {
+                let left = graph.add_force_node("left", ());
 
-            //     // if graph.edges(n_node).count() < max_neighbors {
-            //     let n1 = graph.add_force_node("nw", ());
+                graph.add_edge(node, left, ());
 
-            //     graph.add_edge(n_node, n1, ());
-            //     graph.add_edge(n1, w_node, ());
-            //     // };
+                let corner_a = graph.add_force_node("corner_a", ());
+                let corner_b = graph.add_force_node("corner_b", ());
+                let corner_c = graph.add_force_node("corner_c", ());
 
-            //     // if graph.edges(s_node).count() < max_neighbors {
-            //     let n2 = graph.add_force_node("ne", ());
+                let n1 = e1.target();
+                let n2 = e2.target();
+                let n3 = e3.target();
+                let n4 = e4.target();
 
-            //     graph.add_edge(n_node, n2, ());
-            //     graph.add_edge(n2, e_node, ());
-            //     // }
+                graph.add_edge(n1, corner_a, ());
+                graph.add_edge(n2, corner_a, ());
+                graph.add_edge(n2, corner_b, ());
+                graph.add_edge(n3, corner_b, ());
+                graph.add_edge(n3, corner_c, ());
+                graph.add_edge(n4, corner_c, ());
+            }
 
-            //     // if graph.edges(e_node).count() < max_neighbors {
-            //     let n3 = graph.add_force_node("se", ());
-
-            //     graph.add_edge(s_node, n3, ());
-            //     graph.add_edge(n3, e_node, ());
-            //     // }
-
-            //     // if graph.edges(w_node).count() < max_neighbors {
-            //     let n4 = graph.add_force_node("sw", ());
-
-            //     graph.add_edge(s_node, n4, ());
-            //     graph.add_edge(n4, w_node, ());
-            //     // }
-
-            //     // let diagonal = graph.add_force_node("diagonal", ());
-
-            //     // graph.add_edge(n_node, diagonal, ());
-            //     // graph.add_edge(s_node, diagonal, ());
-            //     // graph.add_edge(e_node, s_node, ());
-            // }
-            // [e1] => {
-            //     graph.remove_node(node);
-            //     graph.remove_edge(e1.id());
-            // }
             _ => {
                 // println!("nothing");
             }

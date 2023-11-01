@@ -11,7 +11,10 @@ use fdg_sim::{Dimensions, ForceGraph, Node, Simulation, SimulationParameters};
 const ZOOM_MIN: f32 = 0.05;
 const ZOOM_MAX: f32 = 2.0;
 
-struct ApplicationState<N, E> {
+struct ApplicationState<N, E>
+where
+    N: Clone,
+{
     sim: Simulation<N, E>,
     current_force: Force<N, E>,
     available_forces: Vec<Force<N, E>>,
@@ -33,9 +36,13 @@ struct ApplicationState<N, E> {
     running: bool,
     camera_2d_offset: Vec2,
     natural_zoom_scroll: bool,
+    settings: VisualizationSettings<N>,
 }
 
-impl<N, E> Default for ApplicationState<N, E> {
+impl<N, E> Default for ApplicationState<N, E>
+where
+    N: Clone,
+{
     fn default() -> Self {
         let sim: Simulation<N, E> = Simulation::default();
 
@@ -72,16 +79,18 @@ impl<N, E> Default for ApplicationState<N, E> {
             running: true,
             camera_2d_offset: vec2(0.0, 0.0),
             natural_zoom_scroll: true,
+            settings: VisualizationSettings::default(),
         }
     }
 }
 
 impl<N: Clone, E: Clone> ApplicationState<N, E> {
-    pub fn new(graph: ForceGraph<N, E>) -> Self {
+    pub fn new(graph: ForceGraph<N, E>, settings: VisualizationSettings<N>) -> Self {
         let sim = Simulation::from_graph(graph, SimulationParameters::default());
 
         Self {
             sim,
+            settings,
             ..Default::default()
         }
     }
@@ -205,7 +214,7 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
                         target.location.x,
                         target.location.y,
                         self.edge_size,
-                        get_edge_color(self.dark_mode),
+                        (self.settings.edge_color)(source, target),
                     );
                 });
             }
@@ -216,7 +225,7 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
                         node.location.x,
                         node.location.y,
                         self.node_size,
-                        get_node_color(self.dark_mode),
+                        (self.settings.node_color)(node),
                     );
                 });
             }
@@ -229,7 +238,7 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
                     .node_weight_mut(index)
                     .expect("sim.find didn't return a valid index");
 
-                draw_node_text(&node, self.dark_mode);
+                draw_node_text(node, self.dark_mode);
 
                 if is_mouse_button_down(MouseButton::Left) {
                     set_default_camera();
@@ -252,7 +261,7 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
                     .node_weight(index)
                     .expect("sim.find didn't return a valid index");
 
-                draw_node_text(&node, self.dark_mode);
+                draw_node_text(node, self.dark_mode);
             }
         } else {
             // set 3D camera position with some fun trig math
@@ -278,11 +287,11 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
             }
 
             if self.show_edges {
-                self.sim.visit_edges(&mut |source, target| {
+                self.sim.visit_edges(&mut |source: &Node<N>, target| {
                     draw_line_3d(
                         glam_to_macroquad_vec3(source.location),
                         glam_to_macroquad_vec3(target.location),
-                        get_edge_color(self.dark_mode),
+                        (self.settings.edge_color)(source, target),
                     );
                 });
             }
@@ -293,7 +302,7 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
                         glam_to_macroquad_vec3(node.location),
                         self.node_size,
                         None,
-                        get_node_color(self.dark_mode),
+                        (self.settings.node_color)(node),
                     );
                 });
             }
@@ -355,11 +364,7 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
                         })
                         .clicked()
                     {
-                        if self.dark_mode {
-                            self.dark_mode = false;
-                        } else {
-                            self.dark_mode = true;
-                        }
+                        self.dark_mode = !self.dark_mode;
                     }
                     ui.separator();
                     if self.current_force.continuous() {
@@ -379,11 +384,7 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
                                 .button(if self.running { "Stop" } else { "Start" })
                                 .clicked()
                             {
-                                if self.running {
-                                    self.running = false;
-                                } else {
-                                    self.running = true;
-                                }
+                                self.running = !self.running;
                             }
                         }
                     } else if ui.button("Run").clicked() {
@@ -473,19 +474,36 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
     }
 }
 
-pub async fn run_window<N: Clone, E: Clone>(graph: &ForceGraph<N, E>) {
-    let mut window = ApplicationState::new(graph.clone());
+pub struct VisualizationSettings<N: Clone> {
+    pub node_color: fn(&Node<N>) -> Color,
+    pub edge_color: fn(&Node<N>, &Node<N>) -> Color,
+}
+
+impl<N: Clone> Default for VisualizationSettings<N> {
+    fn default() -> Self {
+        Self {
+            node_color: get_node_color,
+            edge_color: get_edge_color,
+        }
+    }
+}
+
+pub async fn run_window<N: Clone, E: Clone>(
+    graph: &ForceGraph<N, E>,
+    settings: VisualizationSettings<N>,
+) {
+    let mut window = ApplicationState::new(graph.clone(), settings);
     window.run().await;
 }
 
-fn get_node_color(_dark: bool) -> Color {
-    // let color: u8 = if dark { 255 } else { 0 };
-
-    // Color::from_rgba(color, color, color, 255)
+fn get_node_color<N>(_node: &Node<N>) -> Color
+where
+    N: Clone,
+{
     Color::from_rgba(251, 133, 0, 255)
 }
 
-fn get_edge_color(_dark: bool) -> Color {
+fn get_edge_color<N>(_source: &Node<N>, _target: &Node<N>) -> Color {
     Color::from_rgba(252, 163, 17, 255)
 }
 
