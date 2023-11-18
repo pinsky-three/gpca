@@ -6,7 +6,7 @@ use gpca::haca::local::{HyperEdge, Interaction, LocalHyperGraph};
 pub struct LifeState(pub u8);
 
 impl Interaction<()> for LifeState {
-    fn interact(&self, nodes: &[LifeState], _: &HyperEdge<()>) -> LifeState {
+    fn interact(&self, nodes: &[LifeState], _: Vec<&HyperEdge<()>>) -> LifeState {
         let alive_neighbors = nodes.iter().filter(|&&n| n == LifeState(1)).count();
 
         if alive_neighbors == 2 {

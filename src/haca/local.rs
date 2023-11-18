@@ -11,7 +11,7 @@ where
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
     Self: Sized,
 {
-    fn interact(&self, nodes: &[Self], edges: &HyperEdge<E>) -> Self;
+    fn interact(&self, nodes: &[Self], edges: Vec<&HyperEdge<E>>) -> Self;
 }
 
 pub struct LocalHyperGraph<const D: usize, N, E>
@@ -74,7 +74,7 @@ where
             let neighbors = self.node_neighbors.get(&i).unwrap().to_owned();
             let neighbor_nodes = neighbors.iter().map(|i| self.nodes[*i]).collect::<Vec<N>>();
 
-            *node = node.interact(&neighbor_nodes, &vec![]);
+            *node = node.interact(&neighbor_nodes, vec![]);
         });
 
         self.nodes = new_nodes;
