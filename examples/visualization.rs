@@ -1,12 +1,12 @@
 use fdg_sim::{petgraph::graph::NodeIndex, ForceGraph, ForceGraphHelper};
 use gpca::third::{self, fdg_macroquad::VisualizationSettings};
 
-#[macroquad::main("Lattice Graph")]
+#[egui_macroquad::macroquad::main("Lattice Graph")]
 async fn main() {
     let mut graph: ForceGraph<(), ()> = ForceGraph::default();
     let mut indices: Vec<NodeIndex> = Vec::new();
 
-    let size = 60;
+    let size = 20;
 
     for x in 0..size {
         for y in 0..size {

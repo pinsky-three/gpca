@@ -1,3 +1,4 @@
+use egui_macroquad::macroquad::color::Color;
 use fdg_sim::{
     petgraph::{
         stable_graph::{EdgeReference, NodeIndex},
@@ -6,7 +7,7 @@ use fdg_sim::{
     ForceGraph, ForceGraphHelper,
 };
 use gpca::third::{self, fdg_macroquad::VisualizationSettings};
-use macroquad::prelude::Color;
+// use macroquad::prelude::Color;
 // use tokio::signal::unix::Signal;
 
 #[macroquad::main("Lattice Graph")]
@@ -17,7 +18,11 @@ async fn main() {
 
     loop {
         evolve_system(&mut graph);
-        if graph.node_indices().count() > 500 {
+        // evolve_system(&mut graph);
+        // evolve_system(&mut graph);
+        // evolve_system(&mut graph);
+        // evolve_system(&mut graph);
+        if graph.node_indices().count() > 5000 {
             break;
         }
     }

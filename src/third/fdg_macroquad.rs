@@ -2,11 +2,12 @@ pub use egui_macroquad::macroquad;
 pub use fdg_sim;
 
 use egui_macroquad::egui::{Align2, Checkbox, CollapsingHeader, ComboBox, Slider, Window};
-use egui_macroquad::macroquad::prelude::*;
+// use egui_macroquad::macroquad::prelude::*;
 use fdg_sim::force::{self, Force, Value};
 use fdg_sim::glam::Vec3;
 use fdg_sim::petgraph::stable_graph::NodeIndex;
 use fdg_sim::{Dimensions, ForceGraph, Node, Simulation, SimulationParameters};
+use macroquad::prelude::*;
 
 const ZOOM_MIN: f32 = 0.05;
 const ZOOM_MAX: f32 = 2.0;
@@ -96,7 +97,6 @@ impl<N: Clone, E: Clone> ApplicationState<N, E> {
     }
 
     pub async fn run(&mut self) {
-        // set_fullscreen(true);
         request_new_screen_size(1024., 728.);
         next_frame().await;
 

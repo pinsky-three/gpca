@@ -3,11 +3,13 @@ pub mod haca_systems;
 use haca_systems::life::LifeState;
 use image::{ImageBuffer, Rgb, RgbImage};
 
+use ::rand::{thread_rng, Rng};
 use kdam::tqdm;
-use rand::{thread_rng, Rng};
+// use rand::{thread_rng, Rng};
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::haca_systems::life::new_game_of_life_hyper_graph;
+use egui_macroquad::macroquad::prelude::*;
 
 macro_rules! box_array {
     ($val:expr ; $len:expr) => {{
