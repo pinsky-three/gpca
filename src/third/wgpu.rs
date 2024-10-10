@@ -43,7 +43,7 @@ pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
             (
                 &input_buffer,
                 4,
-                wgpu::BufferBindingType::Storage { read_only: true },
+                wgpu::BufferBindingType::Storage { read_only: false },
             ),
             (
                 &result_buffer,
@@ -53,7 +53,7 @@ pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
             (
                 &kernel_buffer,
                 4,
-                wgpu::BufferBindingType::Storage { read_only: true },
+                wgpu::BufferBindingType::Storage { read_only: false },
             ),
             (
                 &params_buffer,
@@ -467,7 +467,7 @@ impl Pipeline {
         let (bind_group, compute_pipeline) = self.device.create_compute_pipeline(
             &[
                 (
-                    &input_buffer,
+                    input_buffer,
                     4,
                     wgpu::BufferBindingType::Storage { read_only: true },
                 ),
