@@ -84,22 +84,26 @@ pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
 
     // read output_buffer
     let buffer_slice = output_buffer.slice(..);
-    let buffer_future = buffer_slice.map_async(wgpu::MapMode::Read);
+
+    buffer_slice.map_async(wgpu::MapMode::Read, |_r| {});
+
+    // let buffer_future = buffer_slice.map_async(wgpu::MapMode::Read);
     device.device.poll(wgpu::Maintain::Wait);
 
     // Awaits until `buffer_future` can be read from
-    if let Ok(()) = buffer_future.await {
-        let data = buffer_slice.get_mapped_range();
-        output.data = bytemuck::cast_slice::<u8, f32>(&data).to_vec();
+    // if let Ok(()) = buffer_future.await {
+    // } else {
+    //     panic!("failed to run compute on gpu!")
+    // }
 
-        // We have to make sure all mapped views are dropped before we unmap the buffer.
-        drop(data);
-        output_buffer.unmap();
+    let data = buffer_slice.get_mapped_range();
+    output.data = bytemuck::cast_slice::<u8, f32>(&data).to_vec();
 
-        output
-    } else {
-        panic!("failed to run compute on gpu!")
-    }
+    // We have to make sure all mapped views are dropped before we unmap the buffer.
+    drop(data);
+    output_buffer.unmap();
+
+    output
 }
 
 use std::borrow::Cow;
@@ -519,28 +523,26 @@ impl Pipeline {
 
         // Read output
         let buffer_slice = output_buffer.slice(..);
-        let buffer_future = buffer_slice.map_async(wgpu::MapMode::Read);
+
+        buffer_slice.map_async(wgpu::MapMode::Read, |_r| {});
+
         self.device.device.poll(wgpu::Maintain::Wait);
 
         // Awaits until `buffer_future` can be read from
-        if let Ok(()) = buffer_future.await {
-            let data = buffer_slice.get_mapped_range();
-            let mut output = bytemuck::cast_slice::<u8, T>(&data).to_vec();
+        let data = buffer_slice.get_mapped_range();
+        let mut output = bytemuck::cast_slice::<u8, T>(&data).to_vec();
 
-            // We have to make sure all mapped views are dropped before we unmap the buffer.
-            drop(data);
-            output_buffer.unmap();
+        // We have to make sure all mapped views are dropped before we unmap the buffer.
+        drop(data);
+        output_buffer.unmap();
 
-            let mut outputs = Vec::with_capacity(output_buffers.len());
-            for (_, image_size, _) in output_buffers {
-                let size = (image_size.0 * image_size.1) as usize;
-                let remained_data = output.split_off(size);
-                outputs.push(output);
-                output = remained_data;
-            }
-            outputs
-        } else {
-            panic!("failed to run compute on gpu!")
+        let mut outputs = Vec::with_capacity(output_buffers.len());
+        for (_, image_size, _) in output_buffers {
+            let size = (image_size.0 * image_size.1) as usize;
+            let remained_data = output.split_off(size);
+            outputs.push(output);
+            output = remained_data;
         }
+        outputs
     }
 }

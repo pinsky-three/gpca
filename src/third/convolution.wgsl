@@ -1,28 +1,26 @@
-[[block]]
 struct Image {
-    data: [[stride(4)]] array<f32>;
+    data: array<f32>,
 };
 
-[[group(0), binding(0)]]
-var<storage> input: [[access(read_write)]] Image;
+@group(0) @binding(0)
+var<storage, read_write> input: Image;
 
-[[group(0), binding(1)]]
-var<storage> result: [[access(read_write)]] Image;
+@group(0) @binding(1)
+var<storage, read_write> result: Image;
 
-[[group(0), binding(2)]]
-var<storage> kernel: [[access(read_write)]] Image;
+@group(0) @binding(2)
+var<storage, read_write> kernel: Image;
 
-[[block]]
 struct Params {
-    image_width: u32;
-    kernel_size: u32;
+    image_width: u32,
+    kernel_size: u32,
 };
 
-[[group(0), binding(3)]]
+@group(0) @binding(3)
 var<uniform> params: Params;
 
-[[stage(compute), workgroup_size(1)]]
-fn main([[builtin(global_invocation_id)]] global_id : vec3<u32>) {
+@compute @workgroup_size(1)
+fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     var width: u32 = params.image_width;
     var size: u32 = params.kernel_size;
 

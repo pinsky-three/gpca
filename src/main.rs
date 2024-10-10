@@ -1,6 +1,9 @@
 pub mod haca_systems;
 
-use gpca::haca::local::{Interaction, LocalHyperGraph};
+use gpca::{
+    haca::local::{Interaction, LocalHyperGraph},
+    third::wgpu::{self, create_gpu_device, gaussian, Image},
+};
 use haca_systems::life::LifeState;
 use image::{ImageBuffer, Rgb, RgbImage};
 
@@ -10,7 +13,7 @@ use kdam::tqdm;
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::haca_systems::life::new_game_of_life_hyper_graph;
-use egui_macroquad::macroquad::prelude::*;
+// use egui_macroquad::macroquad::prelude::*;
 
 macro_rules! box_array {
     ($val:expr ; $len:expr) => {{
@@ -45,7 +48,7 @@ async fn main() {
 
     let mut graph = new_game_of_life_hyper_graph(mem);
 
-    for _ in tqdm!(0..1000) {
+    for _ in tqdm!(0..10) {
         graph.compute_with_neighbors().await;
     }
 
@@ -80,7 +83,7 @@ async fn main() {
 
     // draw_ascii(&quadtree, 8);
 
-    // graph.compute();
+    graph.compute();
 }
 
 trait LatticeComputable {
@@ -89,53 +92,25 @@ trait LatticeComputable {
 
 impl<const D: usize> LatticeComputable for LocalHyperGraph<D, LifeState, ()> {
     fn compute(&self) {
-        let nodes = self.nodes();
-
-        let n = f32::sqrt(nodes.len() as f32) as i32;
-
-        let (w, h) = (n, n);
-
-        let kernel_size = 3;
-
-        let nodes = nodes.map(|n| n.0);
-
-        process_wgpu(nodes, w, h, kernel_size);
+        process_wgpu::<D>();
     }
 }
 
-fn process_wgpu<const D: usize>(memory: [u8; D], w: i32, h: i32, kernel_size: i32) -> [u8; D] {
-    let mut new_memory = [0; D];
+fn process_wgpu<const D: usize>() {
+    // let mut new_memory = [0; D];
 
-    let kernel = [
-        1, 1, 1, //
-        1, 1, 1, //
-        1, 1, 1, //
-    ];
+    let file = std::env::args().nth(1).expect("image file name");
+    let file = std::path::Path::new(&file);
+    let input = Image::load(&file); // RGB image is converted to luma8
+    let kernel = gaussian(0.8);
 
-    for i in 0..w {
-        for j in 0..h {
-            let mut sum = 0;
+    println!("kernel.size: {:?}", kernel.size);
 
-            for x in -1..2 {
-                for y in -1..2 {
-                    let dx = i + x;
-                    let dy = j + y;
+    let device = create_gpu_device();
+    let output = futures::executor::block_on(wgpu::run(&device, &input, &kernel));
+    output.save(file.with_extension("result.png"));
 
-                    if dx < 0 || dx >= w || dy < 0 || dy >= h {
-                        continue;
-                    }
+    // new_memory
 
-                    let index = (dx * w + dy) as usize;
-
-                    sum += memory[index] * kernel[((x + 1) * 3 + (y + 1)) as usize];
-                }
-            }
-
-            let index = (i * w + j) as usize;
-
-            new_memory[index] = sum;
-        }
-    }
-
-    new_memory
+    // memory
 }
