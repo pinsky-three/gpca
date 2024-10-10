@@ -6,10 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bytemuck = "1.18.0"
 dashmap = "6.1.0"
 egui-macroquad = "0.15.0"
 # fdg-macroquad = "0.3.3"
 fdg-sim = "0.9.1"
+futures = "0.3.31"
 image = "0.25.2"
 itertools = "0.13.0"
 kdam = "0.5.2"
@@ -17,3 +19,4 @@ macroquad = "0.4.13"
 rand = "0.8.5"
 rayon = "1.10.0"
 tokio = { version = "1.40.0", features = ["full"] }
+wgpu = "22.1.0"
