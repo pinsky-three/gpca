@@ -2,7 +2,7 @@ pub mod haca_systems;
 
 use gpca::{
     haca::local::{Interaction, LocalHyperGraph},
-    third::wgpu::{self, create_gpu_device, gaussian, Image},
+    third::wgpu::{self, accumulation, create_gpu_device, gaussian, Image},
 };
 use haca_systems::life::LifeState;
 use image::{ImageBuffer, Rgb, RgbImage};
@@ -69,48 +69,35 @@ async fn main() {
     }
 
     img.save("hca_game_of_life_test.png").unwrap();
-    // let quadtree = build_quadtree_3(
-    //     3,
-    //     Cell {
-    //         x: 0,
-    //         y: 0,
-    //         width: 1000,
-    //         height: 1000,
-    //     },
-    // );
 
-    // println!("{:?}", quadtree);
+    let mem = copy_mem
+        .iter()
+        .map(|x| 255. * x.0 as f32)
+        .collect::<Vec<f32>>();
 
-    // draw_ascii(&quadtree, 8);
-
-    graph.compute();
+    graph.compute(Image {
+        data: mem,
+        width: W as u32,
+        height: H as u32,
+    });
 }
 
 trait LatticeComputable {
-    fn compute(&self);
+    fn compute(&self, input: Image);
 }
 
 impl<const D: usize> LatticeComputable for LocalHyperGraph<D, LifeState, ()> {
-    fn compute(&self) {
-        process_wgpu::<D>();
+    fn compute(&self, input: Image) {
+        process_wgpu::<D>(input);
     }
 }
 
-fn process_wgpu<const D: usize>() {
-    // let mut new_memory = [0; D];
-
-    let file = std::env::args().nth(1).expect("image file name");
-    let file = std::path::Path::new(&file);
-    let input = Image::load(&file); // RGB image is converted to luma8
-    let kernel = gaussian(0.8);
+fn process_wgpu<const D: usize>(input: Image) {
+    let kernel = accumulation();
 
     println!("kernel.size: {:?}", kernel.size);
 
     let device = create_gpu_device();
     let output = futures::executor::block_on(wgpu::run(&device, &input, &kernel));
-    output.save(file.with_extension("result.png"));
-
-    // new_memory
-
-    // memory
+    output.save("output.png");
 }

@@ -427,6 +427,13 @@ pub fn freichen_operator() -> (Kernel, Kernel) {
     (kx, ky)
 }
 
+pub fn accumulation() -> Kernel {
+    Kernel {
+        data: vec![1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+        size: 3,
+    }
+}
+
 pub struct Pipeline {
     pub device: GpuDevice,
     encoder: wgpu::CommandEncoder,
