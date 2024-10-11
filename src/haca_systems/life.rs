@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use gpca::haca::local::{HyperEdge, Interaction, LocalHyperGraph, LocalHyperGraphHeap};
+use crate::haca::local::{HyperEdge, Interaction, LocalHyperGraph, LocalHyperGraphHeap};
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash, Copy)]
 pub struct LifeState(pub u8);

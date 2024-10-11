@@ -135,7 +135,7 @@ pub async fn create_device_queue() -> (wgpu::Device, wgpu::Queue) {
             &wgpu::DeviceDescriptor {
                 label: None,
                 required_limits: wgpu::Limits {
-                    max_buffer_size: 1024 * 1024 * 1024,
+                    max_storage_buffer_binding_size: 512 * 1024 * 1024,
                     ..Default::default()
                 },
                 ..Default::default()
@@ -144,9 +144,6 @@ pub async fn create_device_queue() -> (wgpu::Device, wgpu::Queue) {
         )
         .await
         .expect("Failed to create device")
-
-    // println!("Device created");
-    // println!("Device : {:?}", device);
 }
 
 impl GpuDevice {
