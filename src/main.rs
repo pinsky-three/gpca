@@ -1,7 +1,7 @@
 pub mod haca_systems;
 
 use gpca::{
-    haca::local::{LocalHyperGraph, LocalHyperGraphHeap},
+    haca::local::LocalHyperGraphHeap,
     third::wgpu::{self, accumulation, create_gpu_device, Image},
 };
 use haca_systems::life::{new_game_of_life_hyper_graph_heap, LifeState};
@@ -30,7 +30,7 @@ use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
 #[tokio::main]
 async fn main() {
-    const W: usize = 1024;
+    const W: usize = 2048;
     const H: usize = W;
 
     const WH: usize = W * H;
@@ -51,17 +51,7 @@ async fn main() {
     let mut nodes = graph.nodes().to_owned();
 
     for _ in tqdm!(0..1000) {
-        let mem = nodes
-            .clone()
-            .iter()
-            .map(|x| x.0 as f32)
-            .collect::<Vec<f32>>();
-
-        let res = graph.compute(Image {
-            data: mem,
-            width: W as u32,
-            height: H as u32,
-        });
+        let res = graph.compute(W as u32, H as u32);
 
         let res_data_len = res.data.len();
 
@@ -92,18 +82,28 @@ async fn main() {
 }
 
 trait LatticeComputable {
-    fn compute(&self, input: Image) -> Image;
+    fn compute(&self, w: u32, h: u32) -> Image;
 }
 
-impl<const D: usize> LatticeComputable for LocalHyperGraph<D, LifeState, ()> {
-    fn compute(&self, input: Image) -> Image {
-        process_wgpu(input)
-    }
-}
+// impl<const D: usize> LatticeComputable for LocalHyperGraph<D, LifeState, ()> {
+//     fn compute(&self) -> Image {
+//         process_wgpu(input)
+//     }
+// }
 
 impl LatticeComputable for LocalHyperGraphHeap<LifeState, ()> {
-    fn compute(&self, input: Image) -> Image {
-        process_wgpu(input)
+    fn compute(&self, w: u32, h: u32) -> Image {
+        let mem = self
+            .nodes()
+            .iter()
+            .map(|x| x.0 as f32)
+            .collect::<Vec<f32>>();
+
+        process_wgpu(Image {
+            data: mem,
+            width: w,
+            height: h,
+        })
     }
 }
 

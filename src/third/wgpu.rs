@@ -134,8 +134,10 @@ pub async fn create_device_queue() -> (wgpu::Device, wgpu::Queue) {
         .request_device(
             &wgpu::DeviceDescriptor {
                 label: None,
-                // features: wgpu::Features::empty(),
-                // limits: wgpu::Limits::default(),
+                required_limits: wgpu::Limits {
+                    max_buffer_size: 1024 * 1024 * 1024,
+                    ..Default::default()
+                },
                 ..Default::default()
             },
             None,
