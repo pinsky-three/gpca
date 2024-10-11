@@ -130,7 +130,7 @@ pub async fn create_device_queue() -> (wgpu::Device, wgpu::Queue) {
         .await
         .expect("Failed to find an appropriate adapter");
 
-    let device = adapter
+    adapter
         .request_device(
             &wgpu::DeviceDescriptor {
                 label: None,
@@ -141,12 +141,10 @@ pub async fn create_device_queue() -> (wgpu::Device, wgpu::Queue) {
             None,
         )
         .await
-        .expect("Failed to create device");
+        .expect("Failed to create device")
 
-    println!("Device created");
-    println!("Device : {:?}", device);
-
-    device
+    // println!("Device created");
+    // println!("Device : {:?}", device);
 }
 
 impl GpuDevice {

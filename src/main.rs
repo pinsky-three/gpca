@@ -1,8 +1,8 @@
 pub mod haca_systems;
 
 use gpca::{
-    haca::local::{Interaction, LocalHyperGraph},
-    third::wgpu::{self, accumulation, create_gpu_device, gaussian, Image},
+    haca::local::LocalHyperGraph,
+    third::wgpu::{self, accumulation, create_gpu_device, Image},
 };
 use haca_systems::life::LifeState;
 use image::{ImageBuffer, Rgb, RgbImage};
@@ -31,7 +31,7 @@ macro_rules! box_array {
 
 #[tokio::main]
 async fn main() {
-    const W: usize = 2048;
+    const W: usize = 1024;
     const H: usize = W;
 
     const WH: usize = W * H;
@@ -48,8 +48,26 @@ async fn main() {
 
     let mut graph = new_game_of_life_hyper_graph(mem);
 
-    for _ in tqdm!(0..10) {
-        graph.compute_with_neighbors().await;
+    let nodes = *graph.nodes();
+
+    let mut mem_2 = box_array![LifeState(0); WH];
+
+    for _ in tqdm!(0..1000) {
+        let mem = nodes.iter().map(|x| x.0 as f32).collect::<Vec<f32>>();
+
+        let res = graph.compute(Image {
+            data: mem,
+            width: W as u32,
+            height: H as u32,
+        });
+
+        let res_data_len = res.data.len();
+
+        mem_2.iter_mut().enumerate().for_each(|(i, x)| {
+            *x = LifeState(res.data[i % res_data_len] as u8);
+        });
+
+        graph.update_nodes(mem_2.clone());
     }
 
     let mut img: RgbImage = ImageBuffer::new(W as u32, H as u32);
@@ -69,42 +87,36 @@ async fn main() {
     }
 
     img.save("hca_game_of_life_test.png").unwrap();
-
-    let mem = copy_mem.iter().map(|x| x.0 as f32).collect::<Vec<f32>>();
-
-    graph.compute(Image {
-        data: mem,
-        width: W as u32,
-        height: H as u32,
-    });
 }
 
 trait LatticeComputable {
-    fn compute(&self, input: Image);
+    fn compute(&self, input: Image) -> Image;
 }
 
 impl<const D: usize> LatticeComputable for LocalHyperGraph<D, LifeState, ()> {
-    fn compute(&self, input: Image) {
-        process_wgpu::<D>(input);
+    fn compute(&self, input: Image) -> Image {
+        process_wgpu::<D>(input)
     }
 }
 
-fn process_wgpu<const D: usize>(input: Image) {
+fn process_wgpu<const D: usize>(input: Image) -> Image {
     let kernel = accumulation();
 
-    println!("kernel.size: {:?}", kernel.size);
+    // println!("kernel.size: {:?}", kernel.size);
 
     let device = create_gpu_device();
-    let mut output = futures::executor::block_on(wgpu::run(&device, &input, &kernel));
+    let output = futures::executor::block_on(wgpu::run(&device, &input, &kernel));
 
-    println!(
-        "output: {:?}",
-        output.data.iter().take(200).collect::<Vec<&f32>>()
-    );
+    // println!(
+    //     "output: {:?}",
+    //     output.data.iter().take(200).collect::<Vec<&f32>>()
+    // );
 
-    output.data.iter_mut().for_each(|x| {
-        *x *= 255.0;
-    });
+    // output.data.iter_mut().for_each(|x| {
+    //     *x *= 255.0;
+    // });
 
-    output.save("output.png");
+    // output.save("output.png");
+
+    output
 }

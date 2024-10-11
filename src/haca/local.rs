@@ -83,4 +83,8 @@ where
     pub fn nodes(&self) -> &[N; D] {
         &self.nodes
     }
+
+    pub fn update_nodes(&mut self, new_nodes: Box<[N; D]>) {
+        self.nodes = new_nodes;
+    }
 }
