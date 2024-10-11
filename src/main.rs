@@ -3,6 +3,7 @@ use gpca::{
     haca_systems::life::{new_game_of_life_hyper_graph_heap, LifeState},
     third::wgpu::{self, accumulation, create_gpu_device, GpuDevice, Image},
 };
+use image::{buffer::ConvertBuffer, ImageBuffer};
 use image::{Rgb, RgbImage};
 use kdam::tqdm;
 use rand::{rngs::ThreadRng, Rng};
@@ -19,6 +20,7 @@ async fn main() {
     const WH: usize = W * H;
 
     let mut mem = (0..WH).map(|_i| LifeState(0)).collect::<Vec<LifeState>>();
+    let device = create_gpu_device();
 
     mem.par_iter_mut().for_each(|x| {
         *x = if ThreadRng::default().gen_bool(0.5) {
@@ -29,30 +31,31 @@ async fn main() {
     });
 
     let mut graph = new_game_of_life_hyper_graph_heap(mem);
-    let device = create_gpu_device();
 
     for _ in tqdm!(0..1000) {
         graph.compute(&device, W as u32, H as u32);
     }
 
-    let copy_mem = graph.nodes().par_iter().map(|x| x.0).collect::<Vec<u8>>();
-
-    println!("copy mem len: {} | WxH: {}", copy_mem.len(), WH);
+    let copy_mem: Vec<u8> = graph.nodes().par_iter().map(|x| x.0).collect::<Vec<u8>>();
 
     let mut img = RgbImage::new(W as u32, H as u32);
 
     img.par_enumerate_pixels_mut().for_each(|(x, y, pixel)| {
         let index = (y as usize * H) + x as usize;
-
-        if copy_mem[index] == 1 {
-            *pixel = Rgb([255, 255, 255]);
-        } else {
-            *pixel = Rgb([0, 0, 0]);
-        }
+        *pixel = color_map(copy_mem[index], 2);
     });
+
+    let img: ImageBuffer<Rgb<u8>, Vec<u8>> = img.convert();
 
     img.save(format!("hca_game_of_life_test_{}.png", W))
         .unwrap();
+}
+
+fn color_map(val: u8, states: u8) -> Rgb<u8> {
+    let gradient = colorous::VIRIDIS;
+    let color = gradient.eval_continuous(val as f64 / states as f64);
+
+    Rgb([color.r, color.g, color.b])
 }
 
 trait LatticeComputable {
