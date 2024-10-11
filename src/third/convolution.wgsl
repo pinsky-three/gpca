@@ -24,51 +24,78 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     var width: u32 = params.image_width;
     var size: u32 = params.kernel_size;
 
+    var x: u32 = global_id.x;
+    var y: u32 = global_id.y;
+
+    var index_0: u32 = y * width + x;
+
+    var index_1: u32 = (y-1) * width + x;
+    var index_2: u32 = (y+1) * width + x;
+    var index_3: u32 = y * width + (x-1);
+    var index_4: u32 = y * width + (x+1);
+    var index_5: u32 = (y-1) * width + (x-1);
+    var index_6: u32 = (y-1) * width + (x+1);
+    var index_7: u32 = (y+1) * width + (x-1);
+    var index_8: u32 = (y+1) * width + (x+1);
+
+    
     var value: f32 = 0.0;
-    var i: u32 = 0u;
 
-    loop {
-        if (i >= size) {
-            break;
-        }
+    let n = input.data[index_1] + input.data[index_2] + input.data[index_3] + input.data[index_4] + input.data[index_5] + input.data[index_6] + input.data[index_7] + input.data[index_8];
 
-        var j: u32 = 0u;
-
-        loop {
-            if (j >= size) {
-                break;
-            }
-
-            var k: f32 = kernel.data[j * size + i];
-            var x: u32 = global_id.x + i;
-            var y: u32 = global_id.y + j;
-            value = value + input.data[y * width + x] * k;
-
-            continuing {
-                j = j + 1u;
-            }
-        }
-
-        continuing {
-            i = i + 1u;
-        }
-    }
-
-    var crop: u32 = size - 1u;
-    var index: u32 = global_id.y * (width - crop) + global_id.x;
-
-    var val: f32 = 0.0;
-
-    if (value == 2.0) {
-        var x: u32 = global_id.x;
-        var y: u32 = global_id.y;
-
-        val = input.data[y * width + x];
-    } else if (value == 3.0) {
-        val = 1.0;
+    if (n == 3.0) {
+        value = 1.0;
+    } else if (n == 2.0) {
+        value = input.data[index_0];
     } else {
-        val = 0.0;
+        value = 0.0;
     }
 
-    result.data[index] = val;
+
+    // var value: f32 = 0.0;
+    // var i: u32 = 0u;
+
+    // loop {
+    //     if (i >= size) {
+    //         break;
+    //     }
+
+    //     var j: u32 = 0u;
+
+    //     loop {
+    //         if (j >= size) {
+    //             break;
+    //         }
+
+    //         var k: f32 = kernel.data[j * size + i];
+    //         var x: u32 = global_id.x + i;
+    //         var y: u32 = global_id.y + j;
+    //         value = value + input.data[y * width + x] * k;
+
+    //         continuing {
+    //             j = j + 1u;
+    //         }
+    //     }
+
+    //     continuing {
+    //         i = i + 1u;
+    //     }
+    // }
+
+    // var crop: u32 = size - 1u;
+    
+
+    // var val: f32 = 0.0;
+
+    // if (value == 2.0) {
+        
+
+    //     val = input.data[y * width + x];
+    // } else if (value == 3.0) {
+    //     val = 1.0;
+    // } else {
+    //     val = 0.0;
+    // }
+
+    result.data[index_0] = value;
 }

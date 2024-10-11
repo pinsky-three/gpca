@@ -48,9 +48,9 @@ async fn main() {
 
     let mut graph = new_game_of_life_hyper_graph(mem);
 
-    let nodes = *graph.nodes();
+    let mut nodes = *graph.nodes();
 
-    let mut mem_2 = box_array![LifeState(0); WH];
+    // let mut mem_2 = box_array![LifeState(0); WH];
 
     for _ in tqdm!(0..1000) {
         let mem = nodes.iter().map(|x| x.0 as f32).collect::<Vec<f32>>();
@@ -63,11 +63,11 @@ async fn main() {
 
         let res_data_len = res.data.len();
 
-        mem_2.iter_mut().enumerate().for_each(|(i, x)| {
+        nodes.iter_mut().enumerate().for_each(|(i, x)| {
             *x = LifeState(res.data[i % res_data_len] as u8);
         });
 
-        graph.update_nodes(mem_2.clone());
+        graph.update_nodes(Box::new(nodes));
     }
 
     let mut img: RgbImage = ImageBuffer::new(W as u32, H as u32);
