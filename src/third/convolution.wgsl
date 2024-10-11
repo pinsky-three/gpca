@@ -41,7 +41,14 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     
     var value: f32 = 0.0;
 
-    let n = input.data[index_1] + input.data[index_2] + input.data[index_3] + input.data[index_4] + input.data[index_5] + input.data[index_6] + input.data[index_7] + input.data[index_8];
+    let n = input.data[index_1] + 
+            input.data[index_2] + 
+            input.data[index_3] + 
+            input.data[index_4] + 
+            input.data[index_5] + 
+            input.data[index_6] + 
+            input.data[index_7] + 
+            input.data[index_8];
 
     if (n == 3.0) {
         value = 1.0;
@@ -50,52 +57,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     } else {
         value = 0.0;
     }
-
-
-    // var value: f32 = 0.0;
-    // var i: u32 = 0u;
-
-    // loop {
-    //     if (i >= size) {
-    //         break;
-    //     }
-
-    //     var j: u32 = 0u;
-
-    //     loop {
-    //         if (j >= size) {
-    //             break;
-    //         }
-
-    //         var k: f32 = kernel.data[j * size + i];
-    //         var x: u32 = global_id.x + i;
-    //         var y: u32 = global_id.y + j;
-    //         value = value + input.data[y * width + x] * k;
-
-    //         continuing {
-    //             j = j + 1u;
-    //         }
-    //     }
-
-    //     continuing {
-    //         i = i + 1u;
-    //     }
-    // }
-
-    // var crop: u32 = size - 1u;
-    
-
-    // var val: f32 = 0.0;
-
-    // if (value == 2.0) {
-        
-
-    //     val = input.data[y * width + x];
-    // } else if (value == 3.0) {
-    //     val = 1.0;
-    // } else {
-    //     val = 0.0;
-    // }
 
     result.data[index_0] = value;
 }

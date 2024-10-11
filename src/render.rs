@@ -1,5 +1,5 @@
-use crate::space::DiscreteSpace;
+// use crate::space::DiscreteSpace;
 
-trait SpaceRenderer<const D: usize> {
-    fn render(&self, space: &dyn DiscreteSpace<D>);
-}
+// trait SpaceRenderer<const D: usize> {
+//     fn render(&self, space: &dyn DiscreteSpace<D>);
+// }

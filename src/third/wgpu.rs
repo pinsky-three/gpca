@@ -551,3 +551,9 @@ impl Pipeline {
         outputs
     }
 }
+
+impl Default for Pipeline {
+    fn default() -> Self {
+        Self::new()
+    }
+}

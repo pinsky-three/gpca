@@ -1,10 +1,10 @@
 pub mod haca_systems;
 
 use gpca::{
-    haca::local::LocalHyperGraph,
+    haca::local::{LocalHyperGraph, LocalHyperGraphHeap},
     third::wgpu::{self, accumulation, create_gpu_device, Image},
 };
-use haca_systems::life::LifeState;
+use haca_systems::life::{new_game_of_life_hyper_graph_heap, LifeState};
 use image::{ImageBuffer, Rgb, RgbImage};
 
 use ::rand::{thread_rng, Rng};
@@ -12,22 +12,21 @@ use kdam::tqdm;
 // use rand::{thread_rng, Rng};
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::haca_systems::life::new_game_of_life_hyper_graph;
 // use egui_macroquad::macroquad::prelude::*;
 
-macro_rules! box_array {
-    ($val:expr ; $len:expr) => {{
-        fn vec_to_boxed_array<T>(vec: Vec<T>) -> Box<[T; $len]> {
-            let boxed_slice = vec.into_boxed_slice();
+// macro_rules! box_array {
+//     ($val:expr ; $len:expr) => {{
+//         fn vec_to_boxed_array<T>(vec: Vec<T>) -> Box<[T; $len]> {
+//             let boxed_slice = vec.into_boxed_slice();
 
-            let ptr = ::std::boxed::Box::into_raw(boxed_slice) as *mut [T; $len];
+//             let ptr = ::std::boxed::Box::into_raw(boxed_slice) as *mut [T; $len];
 
-            unsafe { Box::from_raw(ptr) }
-        }
+//             unsafe { Box::from_raw(ptr) }
+//         }
 
-        vec_to_boxed_array(vec![$val; $len])
-    }};
-}
+//         vec_to_boxed_array(vec![$val; $len])
+//     }};
+// }
 
 #[tokio::main]
 async fn main() {
@@ -36,7 +35,8 @@ async fn main() {
 
     const WH: usize = W * H;
 
-    let mut mem = box_array![LifeState(0); WH];
+    let mut mem = (0..WH).map(|_i| LifeState(0)).collect::<Vec<LifeState>>();
+    // box_array![LifeState(0); WH];
 
     mem.par_iter_mut().for_each(|x| {
         *x = if thread_rng().gen_bool(0.5) {
@@ -46,14 +46,16 @@ async fn main() {
         }
     });
 
-    let mut graph = new_game_of_life_hyper_graph(mem);
+    let mut graph = new_game_of_life_hyper_graph_heap(mem);
 
-    let mut nodes = *graph.nodes();
-
-    // let mut mem_2 = box_array![LifeState(0); WH];
+    let mut nodes = graph.nodes().to_owned();
 
     for _ in tqdm!(0..1000) {
-        let mem = nodes.iter().map(|x| x.0 as f32).collect::<Vec<f32>>();
+        let mem = nodes
+            .clone()
+            .iter()
+            .map(|x| x.0 as f32)
+            .collect::<Vec<f32>>();
 
         let res = graph.compute(Image {
             data: mem,
@@ -67,12 +69,12 @@ async fn main() {
             *x = LifeState(res.data[i % res_data_len] as u8);
         });
 
-        graph.update_nodes(Box::new(nodes));
+        graph.update_nodes(nodes.clone());
     }
 
     let mut img: RgbImage = ImageBuffer::new(W as u32, H as u32);
 
-    let copy_mem = *graph.nodes();
+    let copy_mem = graph.nodes().clone();
 
     for y in 0..H {
         for x in 0..W {
@@ -95,28 +97,21 @@ trait LatticeComputable {
 
 impl<const D: usize> LatticeComputable for LocalHyperGraph<D, LifeState, ()> {
     fn compute(&self, input: Image) -> Image {
-        process_wgpu::<D>(input)
+        process_wgpu(input)
     }
 }
 
-fn process_wgpu<const D: usize>(input: Image) -> Image {
-    let kernel = accumulation();
+impl LatticeComputable for LocalHyperGraphHeap<LifeState, ()> {
+    fn compute(&self, input: Image) -> Image {
+        process_wgpu(input)
+    }
+}
 
-    // println!("kernel.size: {:?}", kernel.size);
+fn process_wgpu(input: Image) -> Image {
+    let kernel = accumulation();
 
     let device = create_gpu_device();
     let output = futures::executor::block_on(wgpu::run(&device, &input, &kernel));
-
-    // println!(
-    //     "output: {:?}",
-    //     output.data.iter().take(200).collect::<Vec<&f32>>()
-    // );
-
-    // output.data.iter_mut().for_each(|x| {
-    //     *x *= 255.0;
-    // });
-
-    // output.save("output.png");
 
     output
 }
