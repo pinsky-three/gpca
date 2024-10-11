@@ -26,11 +26,14 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     var value: f32 = 0.0;
     var i: u32 = 0u;
+
     loop {
         if (i >= size) {
             break;
         }
+
         var j: u32 = 0u;
+
         loop {
             if (j >= size) {
                 break;
@@ -45,6 +48,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
                 j = j + 1u;
             }
         }
+
         continuing {
             i = i + 1u;
         }
@@ -52,5 +56,19 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     var crop: u32 = size - 1u;
     var index: u32 = global_id.y * (width - crop) + global_id.x;
-    result.data[index] = value;
+
+    var val: f32 = 0.0;
+
+    if (value == 2.0) {
+        var x: u32 = global_id.x;
+        var y: u32 = global_id.y;
+
+        val = input.data[y * width + x];
+    } else if (value == 3.0) {
+        val = 1.0;
+    } else {
+        val = 0.0;
+    }
+
+    result.data[index] = val;
 }

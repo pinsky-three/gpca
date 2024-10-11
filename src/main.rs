@@ -70,10 +70,7 @@ async fn main() {
 
     img.save("hca_game_of_life_test.png").unwrap();
 
-    let mem = copy_mem
-        .iter()
-        .map(|x| 255. * x.0 as f32)
-        .collect::<Vec<f32>>();
+    let mem = copy_mem.iter().map(|x| x.0 as f32).collect::<Vec<f32>>();
 
     graph.compute(Image {
         data: mem,
@@ -98,6 +95,16 @@ fn process_wgpu<const D: usize>(input: Image) {
     println!("kernel.size: {:?}", kernel.size);
 
     let device = create_gpu_device();
-    let output = futures::executor::block_on(wgpu::run(&device, &input, &kernel));
+    let mut output = futures::executor::block_on(wgpu::run(&device, &input, &kernel));
+
+    println!(
+        "output: {:?}",
+        output.data.iter().take(200).collect::<Vec<&f32>>()
+    );
+
+    output.data.iter_mut().for_each(|x| {
+        *x *= 255.0;
+    });
+
     output.save("output.png");
 }
