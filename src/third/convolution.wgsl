@@ -24,38 +24,41 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     var width: u32 = params.image_width;
     var size: u32 = params.kernel_size;
 
+    var states: u32 = 6;
+    var threshold: u32 = 1;
+
     var x: u32 = global_id.x;
     var y: u32 = global_id.y;
 
     var index_0: u32 = y * width + x;
 
-    var index_1: u32 = (y-1) * width + x;
-    var index_2: u32 = (y+1) * width + x;
-    var index_3: u32 = y * width + (x-1);
-    var index_4: u32 = y * width + (x+1);
-    var index_5: u32 = (y-1) * width + (x-1);
-    var index_6: u32 = (y-1) * width + (x+1);
-    var index_7: u32 = (y+1) * width + (x-1);
-    var index_8: u32 = (y+1) * width + (x+1);
+    var index_1: u32 = (y-1u) * width + x;
+    var index_2: u32 = (y+1u) * width + x;
+    var index_3: u32 = y * width + (x-1u);
+    var index_4: u32 = y * width + (x+1u);
+    var index_5: u32 = (y-1u) * width + (x-1u);
+    var index_6: u32 = (y-1u) * width + (x+1u);
+    var index_7: u32 = (y+1u) * width + (x-1u);
+    var index_8: u32 = (y+1u) * width + (x+1u);
 
-    
-    var value: f32 = 0.0;
+    var i: u32 = u32(input.data[index_0]);
 
-    let n = input.data[index_1] + 
-            input.data[index_2] + 
-            input.data[index_3] + 
-            input.data[index_4] + 
-            input.data[index_5] + 
-            input.data[index_6] + 
-            input.data[index_7] + 
-            input.data[index_8];
+    var i_1: f32 = f32((i + 1u) % states);
 
-    if (n == 3.0) {
-        value = 1.0;
-    } else if (n == 2.0) {
-        value = input.data[index_0];
-    } else {
-        value = 0.0;
+    // Convert the boolean results of comparisons to u32 (1 if true, 0 if false)
+    var n: u32 = u32(input.data[index_1] == i_1) +
+            u32(input.data[index_2] == i_1) +
+            u32(input.data[index_3] == i_1) +
+            u32(input.data[index_4] == i_1) +
+            u32(input.data[index_5] == i_1) +
+            u32(input.data[index_6] == i_1) +
+            u32(input.data[index_7] == i_1) +
+            u32(input.data[index_8] == i_1);
+
+    var value: f32 = f32(i);
+
+    if (n > threshold) {
+        value = i_1;
     }
 
     result.data[index_0] = value;

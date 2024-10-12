@@ -19,15 +19,15 @@ async fn main() {
 
     const WH: usize = W * H;
 
+    const STATES: usize = 6;
+
     let mut mem = (0..WH).map(|_i| LifeState(0)).collect::<Vec<LifeState>>();
     let device = create_gpu_device();
 
     mem.par_iter_mut().for_each(|x| {
-        *x = if ThreadRng::default().gen_bool(0.5) {
-            LifeState(1)
-        } else {
-            LifeState(0)
-        }
+        let val = ThreadRng::default().gen_range(0..STATES);
+
+        *x = LifeState(val as u8);
     });
 
     let mut graph = new_game_of_life_hyper_graph_heap(mem);
@@ -42,7 +42,7 @@ async fn main() {
 
     img.par_enumerate_pixels_mut().for_each(|(x, y, pixel)| {
         let index = (y as usize * H) + x as usize;
-        *pixel = color_map(copy_mem[index], 2);
+        *pixel = color_map(copy_mem[index], STATES as u8);
     });
 
     let img: ImageBuffer<Rgb<u8>, Vec<u8>> = img.convert();
@@ -52,7 +52,7 @@ async fn main() {
 }
 
 fn color_map(val: u8, states: u8) -> Rgb<u8> {
-    let gradient = colorous::VIRIDIS;
+    let gradient = colorous::MAGMA;
     let color = gradient.eval_continuous(val as f64 / states as f64);
 
     Rgb([color.r, color.g, color.b])
