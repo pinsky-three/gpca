@@ -45,7 +45,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     var i_1: f32 = f32((i + 1u) % states);
 
-    // Convert the boolean results of comparisons to u32 (1 if true, 0 if false)
     var n: u32 = u32(input.data[index_1] == i_1) +
             u32(input.data[index_2] == i_1) +
             u32(input.data[index_3] == i_1) +

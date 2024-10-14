@@ -34,6 +34,7 @@ async fn main() {
 
     for _ in tqdm!(0..1000) {
         graph.compute(&device, W as u32, H as u32);
+        // graph.compute_with_neighbors().await;
     }
 
     let copy_mem: Vec<u8> = graph.nodes().par_iter().map(|x| x.0).collect::<Vec<u8>>();
