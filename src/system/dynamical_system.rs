@@ -1,14 +1,12 @@
 use std::hash::Hash;
 
-use rayon::iter::{
-    IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
-};
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{
     dynamics::local::LocalDynamic,
     spaces::{
         lattice::LatticeComputable,
-        local::{HyperEdge, LocalHyperGraph, Stateable},
+        local::{LocalHyperGraph, Stateable},
     },
     third::wgpu::{self, accumulation, GpuDevice, Image},
 };
