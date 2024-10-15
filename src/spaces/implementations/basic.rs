@@ -1,12 +1,25 @@
 use std::{collections::HashMap, hash::Hash};
 
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rand::{rngs::ThreadRng, Rng};
+use rayon::iter::{
+    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
+};
 
 use crate::spaces::local::{HyperEdge, LocalHyperGraph, Stateable};
 
 #[derive(Clone, Debug, Default, Hash, Eq, PartialEq)]
 pub struct DiscreteState {
     state: u32,
+}
+
+impl DiscreteState {
+    pub fn filled_vector(size: u32, states: u32) -> Vec<DiscreteState> {
+        // vec![DiscreteState { state }; size]
+        (0..size)
+            .into_par_iter()
+            .map(|_i| DiscreteState::from_state(ThreadRng::default().gen_range(0..states)))
+            .collect::<Vec<DiscreteState>>()
+    }
 }
 
 impl Stateable for DiscreteState {
