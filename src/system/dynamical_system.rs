@@ -52,34 +52,12 @@ where
         self.space.nodes().to_owned()
     }
 
+    pub fn space(&self) -> &S {
+        &self.space
+    }
+
     pub fn compute_sync(&mut self) {
         let mut new_nodes = self.space.nodes().clone();
-
-        // let new_nodes = self
-        //     .space
-        //     .nodes()
-        //     .par_iter()
-        //     .enumerate()
-        //     .map(|(id, node)| {
-        //         self.dynamic.update(
-        //             node,
-        //             &self
-        //                 .space
-        //                 .node_neighbors()
-        //                 .get(&id)
-        //                 .unwrap()
-        //                 .iter()
-        //                 .map(|x| self.space.nodes()[*x].clone())
-        //                 .collect::<Vec<N>>(),
-        //             self.space
-        //                 .edges()
-        //                 .iter()
-        //                 .filter(|(k, _)| *k == &id)
-        //                 .map(|(_, v)| v)
-        //                 .collect::<Vec<&HyperEdge<E>>>(),
-        //         )
-        //     })
-        //     .collect();
 
         new_nodes.par_iter_mut().enumerate().for_each(|(i, node)| {
             let neighbors = self.space.node_neighbors().get(&i).unwrap().to_owned();

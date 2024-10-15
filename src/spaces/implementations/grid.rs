@@ -2,7 +2,7 @@ use super::basic::HyperGraphHeap;
 use crate::spaces::local::Stateable;
 use std::{collections::HashMap, hash::Hash};
 
-impl<N, E> HyperGraphHeap<N, E>
+impl<N, E> HyperGraphHeap<N, E, (u32, u32)>
 where
     N: Clone + Sync + Send + Hash + Eq + Stateable,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Default,
@@ -12,7 +12,7 @@ where
         width: u32,
         height: u32,
         default_edge: E,
-    ) -> HyperGraphHeap<N, E> {
+    ) -> HyperGraphHeap<N, E, (u32, u32)> {
         let mut edges = HashMap::<usize, Vec<(Vec<usize>, E)>>::new();
 
         for i in 0..(width as i32) {
@@ -55,6 +55,6 @@ where
             }
         }
 
-        HyperGraphHeap::from_nodes_and_edges(nodes.to_owned(), edges)
+        HyperGraphHeap::from_nodes_and_edges(nodes.to_owned(), edges, &(width, height))
     }
 }

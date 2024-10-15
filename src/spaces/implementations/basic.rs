@@ -4,7 +4,22 @@ use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIter
 
 use crate::spaces::local::{HyperEdge, LocalHyperGraph, Stateable};
 
-pub struct HyperGraphHeap<N, E>
+#[derive(Clone, Debug, Default, Hash, Eq, PartialEq)]
+pub struct DiscreteState {
+    state: u32,
+}
+
+impl Stateable for DiscreteState {
+    fn state(&self) -> u32 {
+        self.state
+    }
+
+    fn from_state(state: u32) -> Self {
+        Self { state }
+    }
+}
+
+pub struct HyperGraphHeap<N, E, P>
 where
     N: Clone + Sync + Send + Hash + Eq + Stateable,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
@@ -12,12 +27,15 @@ where
     nodes: Vec<N>,
     edges: HashMap<usize, HyperEdge<E>>,
     node_neighbors: HashMap<usize, Vec<usize>>,
+
+    payload: P,
 }
 
-impl<N, E> LocalHyperGraph<N, E> for HyperGraphHeap<N, E>
+impl<N, E, P> LocalHyperGraph<N, E> for HyperGraphHeap<N, E, P>
 where
     N: Clone + Sync + Send + Hash + Eq + Stateable,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+    P: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
 {
     fn nodes(&self) -> &Vec<N> {
         &self.nodes
@@ -40,19 +58,33 @@ where
     }
 }
 
-impl<N, E> HyperGraphHeap<N, E>
+impl<N, E, P> HyperGraphHeap<N, E, P>
 where
     N: Clone + Sync + Send + Hash + Eq + Stateable,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+    P: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+{
+    pub fn payload(&self) -> &P {
+        &self.payload
+    }
+}
+
+impl<N, E, P> HyperGraphHeap<N, E, P>
+where
+    N: Clone + Sync + Send + Hash + Eq + Stateable,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+    P: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Default,
 {
     pub fn from_nodes_and_edges(
         nodes: Vec<N>,
         edges: HashMap<usize, HyperEdge<E>>,
-    ) -> HyperGraphHeap<N, E> {
+        payload: &P,
+    ) -> HyperGraphHeap<N, E, P> {
         let mut s = Self {
             nodes,
             edges,
             node_neighbors: HashMap::new(),
+            payload: payload.clone(),
         };
 
         s.update_neighbors();
@@ -84,20 +116,5 @@ where
         });
 
         self.node_neighbors = node_neighbors;
-    }
-}
-
-#[derive(Clone, Debug, Default, Hash, Eq, PartialEq)]
-pub struct DiscreteState {
-    state: u32,
-}
-
-impl Stateable for DiscreteState {
-    fn state(&self) -> u32 {
-        self.state
-    }
-
-    fn from_state(state: u32) -> Self {
-        Self { state }
     }
 }

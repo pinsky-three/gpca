@@ -5,6 +5,7 @@ use gpca::{
         local::Stateable,
     },
     system::dynamical_system::DynamicalSystem,
+    third::wgpu::create_gpu_device,
     // third::wgpu::create_gpu_device,
 };
 use image::{Rgb, RgbImage};
@@ -39,7 +40,7 @@ async fn main() {
 
     println!("Space created");
 
-    // let device = create_gpu_device();
+    let device = create_gpu_device();
 
     // mem.par_iter_mut().for_each(|x| {
     //     let val = ;
@@ -58,9 +59,9 @@ async fn main() {
     for _ in tqdm!(0..100) {
         // graph.compute(&device, W as u32, H as u32);
         // graph.compute_with_neighbors().await;
-        // system.compute_sync_wgpu(&device, W as u32, H as u32);
+        system.compute_sync_wgpu(&device);
 
-        system.compute_sync();
+        // system.compute_sync();
     }
 
     let states = system
