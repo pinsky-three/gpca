@@ -48,7 +48,7 @@ pub enum Signal<N, E> {
     },
 }
 
-type GraphByEdge = Vec<Vec<u32>>;
+// type GraphByEdge = Vec<Vec<u32>>;
 
 // fn transform(graph: GraphByEdge) -> GraphByEdge {
 //     match graph.as_slice() {
@@ -62,9 +62,13 @@ type GraphByEdge = Vec<Vec<u32>>;
 pub struct PseudoLatticeGraph;
 
 impl Interaction for PseudoLatticeGraph {
-    fn interact<E>(&self, node: NodeIndex, edges: Vec<EdgeReference<'_, E>>) -> Vec<Signal<(), E>> {
+    fn interact<E>(
+        &self,
+        _node: NodeIndex,
+        edges: Vec<EdgeReference<'_, E>>,
+    ) -> Vec<Signal<(), E>> {
         // let collected_edges: Vec<EdgeReference<'_, ()>> = edges.collect();
-        let mut signals = Vec::new();
+        let signals = Vec::new();
 
         match edges[..] {
             [] => {
@@ -87,41 +91,40 @@ impl Interaction for PseudoLatticeGraph {
                 // graph.add_edge(node, down, ());
             }
 
-            [e1, e2, e3, e4] => {
-                // let n1 = e1.target();
-                // let n2 = e2.target();
-                // let n3 = e3.target();
-                // let n4 = e4.target();
+            // [e1, e2, e3, e4] => {
+            // let n1 = e1.target();
+            // let n2 = e2.target();
+            // let n3 = e3.target();
+            // let n4 = e4.target();
 
-                // if graph.edges(n1).count() < 2 || graph.edges(n2).count() < 2 {
-                //     let corner_a = graph.add_force_node("corner_a", ());
+            // if graph.edges(n1).count() < 2 || graph.edges(n2).count() < 2 {
+            //     let corner_a = graph.add_force_node("corner_a", ());
 
-                //     graph.add_edge(n1, corner_a, ());
-                //     graph.add_edge(n2, corner_a, ());
-                // }
+            //     graph.add_edge(n1, corner_a, ());
+            //     graph.add_edge(n2, corner_a, ());
+            // }
 
-                // if graph.edges(n2).count() < 2 || graph.edges(n3).count() < 2 {
-                //     let corner_b = graph.add_force_node("corner_b", ());
+            // if graph.edges(n2).count() < 2 || graph.edges(n3).count() < 2 {
+            //     let corner_b = graph.add_force_node("corner_b", ());
 
-                //     graph.add_edge(n2, corner_b, ());
-                //     graph.add_edge(n3, corner_b, ());
-                // }
+            //     graph.add_edge(n2, corner_b, ());
+            //     graph.add_edge(n3, corner_b, ());
+            // }
 
-                // if graph.edges(n3).count() < 2 || graph.edges(n4).count() < 2 {
-                //     let corner_c = graph.add_force_node("corner_c", ());
+            // if graph.edges(n3).count() < 2 || graph.edges(n4).count() < 2 {
+            //     let corner_c = graph.add_force_node("corner_c", ());
 
-                //     graph.add_edge(n3, corner_c, ());
-                //     graph.add_edge(n4, corner_c, ());
-                // }
+            //     graph.add_edge(n3, corner_c, ());
+            //     graph.add_edge(n4, corner_c, ());
+            // }
 
-                // if graph.edges(n4).count() < 2 || graph.edges(n1).count() < 2 {
-                //     let corner_d = graph.add_force_node("corner_d", ());
+            // if graph.edges(n4).count() < 2 || graph.edges(n1).count() < 2 {
+            //     let corner_d = graph.add_force_node("corner_d", ());
 
-                //     graph.add_edge(n4, corner_d, ());
-                //     graph.add_edge(n1, corner_d, ());
-                // }
-            }
-
+            //     graph.add_edge(n4, corner_d, ());
+            //     graph.add_edge(n1, corner_d, ());
+            // }
+            // }
             _ => {}
         }
 
@@ -195,24 +198,24 @@ fn evolve_system(graph: &mut ForceGraph<(), ()>) {
                 }
             }
 
-            [e1, e2, e3, e4, e5, ..] => {
-                let n1 = e2.target();
-                let n5 = e4.target();
+            // [e1, e2, e3, e4, e5, ..] => {
+            //     let n1 = e2.target();
+            //     let n5 = e4.target();
 
-                println!("n1: {}", n1.index());
-                println!("n5: {}", n5.index());
+            //     println!("n1: {}", n1.index());
+            //     println!("n5: {}", n5.index());
 
-                let n1_edges = graph.edges(n1).count();
-                let n5_edges = graph.edges(n5).count();
+            //     let n1_edges = graph.edges(n1).count();
+            //     let n5_edges = graph.edges(n5).count();
 
-                if n1_edges == 2 && n5_edges == 2 {
-                    let n4 = e4.target();
-                    graph.remove_node(n5);
-                    graph.remove_edge(e5.id());
+            //     if n1_edges == 2 && n5_edges == 2 {
+            //         let n4 = e4.target();
+            //         graph.remove_node(n5);
+            //         graph.remove_edge(e5.id());
 
-                    graph.add_edge(n1, n4, ());
-                }
-            }
+            //         graph.add_edge(n1, n4, ());
+            //     }
+            // }
             _ => {
                 // println!("nothing");
             }

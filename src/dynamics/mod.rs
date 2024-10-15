@@ -1,2 +1,2 @@
-pub mod eca;
-pub mod life;
+pub mod implementations;
+pub mod local;
