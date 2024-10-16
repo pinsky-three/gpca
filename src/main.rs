@@ -23,7 +23,7 @@ async fn main() {
 
     let space = HyperGraphHeap::new_grid(&DiscreteState::filled_vector(W * H, STATES), W, H, ());
 
-    let dynamic = LifeLike::new(&[3], &[2, 3]);
+    let dynamic = LifeLike::new(&[3], &[2, 3, 7, 8]); // highlife+
 
     let mut system = DynamicalSystem::new(Box::new(space), Box::new(dynamic));
 

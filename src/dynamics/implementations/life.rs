@@ -100,29 +100,9 @@ where
             height: image.height - crop,
         };
 
-        // let n: Vec<i32> = self
-        //     .observation_neighbors()
-        //     .into_iter()
-        //     .flatten()
-        //     .collect::<Vec<i32>>();
+        let observation = <_ as LatticeComputable<N, E>>::observation_neighbors(self);
 
-        // let n: Vec<Vec<i32>> = self.observation_neighbors();
-
-        // let a = n.iter().flatten().copied().collect::<Vec<i32>>();
-
-        let a = [
-            [-1, -1],
-            [-1, 0],
-            [-1, 1],
-            [0, -1],
-            [0, 1],
-            [1, -1],
-            [1, 0],
-            [1, 1],
-        ];
-
-        // let b_list = [3u32];
-        // let s_list = [2u32, 3u32];
+        let neighbors = observation.iter().flatten().copied().collect::<Vec<i32>>();
 
         let b_num = self
             .dynamic()
@@ -144,7 +124,8 @@ where
         let input_buffer = device.create_data_buffer("input", bytemuck::cast_slice(&image.data));
         let result_buffer = device.create_buffer("result", output_size);
         // let neighbors_buffer = device.create_data_buffer("neighbors", bytemuck::cast_slice(&n));
-        let neighbors_buffer = device.create_data_buffer("neighbors", bytemuck::cast_slice(&a[..]));
+        let neighbors_buffer =
+            device.create_data_buffer("neighbors", bytemuck::cast_slice(&neighbors[..]));
         let output_buffer = device.create_output_buffer("output", output_size);
 
         // let rule_data = vec![b_num, s_num];
