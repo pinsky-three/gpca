@@ -114,13 +114,22 @@ where
             .par_iter()
             .enumerate()
             .map(|(i, _)| {
-                let neighbors = edges.get(&i).unwrap().to_owned();
+                if let Some(neighbors) = edges.get(&i) {
+                    neighbors
+                        .iter()
+                        .flat_map(|i| &i.0)
+                        .copied()
+                        .collect::<Vec<usize>>()
+                } else {
+                    vec![]
+                }
+                // let neighbors = edges.get(&i).unwrap().to_owned();
 
-                neighbors
-                    .iter()
-                    .flat_map(|i| &i.0)
-                    .copied()
-                    .collect::<Vec<usize>>()
+                // neighbors
+                //     .iter()
+                //     .flat_map(|i| &i.0)
+                //     .copied()
+                //     .collect::<Vec<usize>>()
             })
             .collect::<Vec<Vec<usize>>>();
 

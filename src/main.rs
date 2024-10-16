@@ -14,8 +14,8 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 #[tokio::main]
 async fn main() {
-    const W: u32 = 1024;
-    const H: u32 = W;
+    const W: u32 = 1280;
+    const H: u32 = 720;
 
     const STATES: u32 = 2;
 
@@ -23,15 +23,16 @@ async fn main() {
 
     let space = HyperGraphHeap::new_grid(&DiscreteState::filled_vector(W * H, STATES), W, H, ());
 
-    let dynamic = LifeLike::new(&[3], &[2, 3, 7, 8]); // highlife+
+    let dynamic = LifeLike::new(&[3], &[2, 3]); // highlife+
 
     let mut system = DynamicalSystem::new(Box::new(space), Box::new(dynamic));
 
-    for _ in tqdm!(0..1000) {
-        system.compute_sync_wgpu(&device);
+    for _ in tqdm!(0..100) {
+        // system.compute_sync_wgpu(&device);
+        system.compute_sync();
     }
 
-    let states = system
+    let current_full_state = system
         .space_state()
         .par_iter()
         .map(|x| x.state() as u8)
@@ -41,7 +42,8 @@ async fn main() {
 
     img.par_enumerate_pixels_mut().for_each(|(x, y, pixel)| {
         let index = (y as usize * H as usize) + x as usize;
-        let color = colorous::MAGMA.eval_continuous(states[index] as f64 / STATES as f64);
+        let color =
+            colorous::CUBEHELIX.eval_continuous(current_full_state[index] as f64 / STATES as f64);
         *pixel = Rgb([color.r, color.g, color.b]);
     });
 

@@ -1,8 +1,29 @@
+use crate::spaces::{lattice::LatticeComputable, local::Stateable};
+
+use std::hash::Hash;
+use wgpu::util::DeviceExt;
+
 pub type Real = f32;
 pub enum BorderType {
     Crop,
     Mirror,
     Zero,
+}
+
+pub struct Image {
+    pub data: Vec<Real>,
+    pub width: u32,
+    pub height: u32,
+}
+
+pub struct GpuDevice {
+    pub(crate) device: wgpu::Device,
+    pub(crate) queue: wgpu::Queue,
+}
+
+pub struct Kernel {
+    pub data: Vec<Real>, // data length is size×size
+    pub size: u32,
 }
 
 pub async fn run<N, E>(
@@ -54,16 +75,6 @@ where
     output_buffer.unmap();
 
     output
-}
-
-use std::hash::Hash;
-use wgpu::util::DeviceExt;
-
-use crate::spaces::{lattice::LatticeComputable, local::Stateable};
-
-pub struct GpuDevice {
-    pub(crate) device: wgpu::Device,
-    pub(crate) queue: wgpu::Queue,
 }
 
 pub fn create_gpu_device() -> GpuDevice {
@@ -216,50 +227,6 @@ impl GpuDevice {
     }
 }
 
-/// Row major image data
-pub struct Image {
-    pub data: Vec<Real>,
-    pub width: u32,
-    pub height: u32,
-}
-
-impl Image {
-    pub fn new(width: u32, height: u32, value: Real) -> Self {
-        let len = (width * height) as usize;
-        let data = vec![value; len];
-        Image {
-            width,
-            height,
-            data,
-        }
-    }
-
-    pub fn size(&self) -> u32 {
-        self.width * self.height
-    }
-
-    pub fn load<P: AsRef<std::path::Path>>(filepath: &P) -> Image {
-        let image = image::open(filepath).expect("read image file").into_luma8();
-        let (width, height) = image.dimensions();
-        let data = image.as_raw().iter().map(|pixel| *pixel as Real).collect();
-        Image {
-            data,
-            width,
-            height,
-        }
-    }
-
-    pub fn save<P: AsRef<std::path::Path>>(&self, filepath: P) {
-        let image = image::GrayImage::from_raw(
-            self.width,
-            self.height,
-            self.data.iter().map(|pixel| pixel.abs() as u8).collect(),
-        )
-        .expect("Create output image");
-        image.save(filepath).expect("write image file");
-    }
-}
-
 impl std::ops::Index<(u32, u32)> for Image {
     type Output = Real;
 
@@ -268,12 +235,6 @@ impl std::ops::Index<(u32, u32)> for Image {
         let idx = (y * self.width + x) as usize;
         &self.data[idx]
     }
-}
-
-/// Square shaped convolution kernel
-pub struct Kernel {
-    pub data: Vec<Real>, // data length is size×size
-    pub size: u32,
 }
 
 impl std::ops::Index<(u32, u32)> for Kernel {
@@ -286,95 +247,134 @@ impl std::ops::Index<(u32, u32)> for Kernel {
     }
 }
 
-/// compute gaussian kernel
-pub fn gaussian(sigma: Real) -> Kernel {
-    /*
-      The size of the kernel is selected to guarantee that the first discarded
-      term is at least 10^prec times smaller than the central value. For that,
-      the half size of the kernel must be larger than x, with
-        e^(-x^2/2sigma^2) = 1/10^prec
-      Then,
-        x = sigma * sqrt( 2 * prec * ln(10) )
-    */
-    let prec = 3.0;
-    let radius = (sigma * (2.0 * prec * (10.0 as Real).ln()).sqrt()).ceil() as i32;
-    let size = 1 + 2 * radius; /* kernel size */
-    let mut data = Vec::with_capacity((size * size) as usize);
-    for y in -radius..=radius {
-        for x in -radius..=radius {
-            let dist2 = x.pow(2) + y.pow(2);
-            // proximate a circle region
-            let value = if dist2 <= radius * radius {
-                (-0.5 * (dist2 as Real) / sigma.powi(2)).exp()
-            } else {
-                0.0
-            };
-            data.push(value);
-        }
-    }
+/// Row major image data
 
-    //normalization
-    let sum: Real = data.iter().sum();
-    if sum > 0.0 {
-        for v in data.iter_mut() {
-            *v /= sum;
-        }
-    }
+// impl Image {
+//     pub fn new(width: u32, height: u32, value: Real) -> Self {
+//         let len = (width * height) as usize;
+//         let data = vec![value; len];
+//         Image {
+//             width,
+//             height,
+//             data,
+//         }
+//     }
 
-    Kernel {
-        data,
-        size: size as u32,
-    }
-}
+//     pub fn size(&self) -> u32 {
+//         self.width * self.height
+//     }
 
-pub fn roberts_operator() -> (Kernel, Kernel) {
-    let kx = Kernel {
-        data: vec![1.0, 0.0, 0.0, -1.0],
-        size: 2,
-    };
-    let ky = Kernel {
-        data: vec![0.0, 1.0, -1.0, 0.0],
-        size: 2,
-    };
-    (kx, ky)
-}
+//     pub fn load<P: AsRef<std::path::Path>>(filepath: &P) -> Image {
+//         let image = image::open(filepath).expect("read image file").into_luma8();
+//         let (width, height) = image.dimensions();
+//         let data = image.as_raw().iter().map(|pixel| *pixel as Real).collect();
+//         Image {
+//             data,
+//             width,
+//             height,
+//         }
+//     }
 
-pub fn desolneux_operator() -> (Kernel, Kernel) {
-    let kx = Kernel {
-        data: vec![-0.5, 0.5, -0.5, 0.5],
-        size: 2,
-    };
-    let ky = Kernel {
-        data: vec![-0.5, -0.5, 0.5, 0.5],
-        size: 2,
-    };
-    (kx, ky)
-}
+//     pub fn save<P: AsRef<std::path::Path>>(&self, filepath: P) {
+//         let image = image::GrayImage::from_raw(
+//             self.width,
+//             self.height,
+//             self.data.iter().map(|pixel| pixel.abs() as u8).collect(),
+//         )
+//         .expect("Create output image");
+//         image.save(filepath).expect("write image file");
+//     }
+// }
 
-pub fn sobel_operator() -> (Kernel, Kernel) {
-    let kx = Kernel {
-        data: vec![-1.0, 0.0, 1.0, -2.0, 0.0, 2.0, -1.0, 0.0, 1.0],
-        size: 3,
-    };
-    let ky = Kernel {
-        data: vec![-1.0, -2.0, -1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 1.0],
-        size: 3,
-    };
-    (kx, ky)
-}
+// /// compute gaussian kernel
+// pub fn gaussian(sigma: Real) -> Kernel {
+//     /*
+//       The size of the kernel is selected to guarantee that the first discarded
+//       term is at least 10^prec times smaller than the central value. For that,
+//       the half size of the kernel must be larger than x, with
+//         e^(-x^2/2sigma^2) = 1/10^prec
+//       Then,
+//         x = sigma * sqrt( 2 * prec * ln(10) )
+//     */
+//     let prec = 3.0;
+//     let radius = (sigma * (2.0 * prec * (10.0 as Real).ln()).sqrt()).ceil() as i32;
+//     let size = 1 + 2 * radius; /* kernel size */
+//     let mut data = Vec::with_capacity((size * size) as usize);
+//     for y in -radius..=radius {
+//         for x in -radius..=radius {
+//             let dist2 = x.pow(2) + y.pow(2);
+//             // proximate a circle region
+//             let value = if dist2 <= radius * radius {
+//                 (-0.5 * (dist2 as Real) / sigma.powi(2)).exp()
+//             } else {
+//                 0.0
+//             };
+//             data.push(value);
+//         }
+//     }
 
-pub fn freichen_operator() -> (Kernel, Kernel) {
-    let sqrt_2 = (2.0 as Real).sqrt();
-    let kx = Kernel {
-        data: vec![-1.0, 0.0, 1.0, -sqrt_2, 0.0, sqrt_2, -1.0, 0.0, 1.0],
-        size: 3,
-    };
-    let ky = Kernel {
-        data: vec![-1.0, -sqrt_2, -1.0, 0.0, 0.0, 0.0, 1.0, sqrt_2, 1.0],
-        size: 3,
-    };
-    (kx, ky)
-}
+//     //normalization
+//     let sum: Real = data.iter().sum();
+//     if sum > 0.0 {
+//         for v in data.iter_mut() {
+//             *v /= sum;
+//         }
+//     }
+
+//     Kernel {
+//         data,
+//         size: size as u32,
+//     }
+// }
+
+// pub fn roberts_operator() -> (Kernel, Kernel) {
+//     let kx = Kernel {
+//         data: vec![1.0, 0.0, 0.0, -1.0],
+//         size: 2,
+//     };
+//     let ky = Kernel {
+//         data: vec![0.0, 1.0, -1.0, 0.0],
+//         size: 2,
+//     };
+//     (kx, ky)
+// }
+
+// pub fn desolneux_operator() -> (Kernel, Kernel) {
+//     let kx = Kernel {
+//         data: vec![-0.5, 0.5, -0.5, 0.5],
+//         size: 2,
+//     };
+//     let ky = Kernel {
+//         data: vec![-0.5, -0.5, 0.5, 0.5],
+//         size: 2,
+//     };
+//     (kx, ky)
+// }
+
+// pub fn sobel_operator() -> (Kernel, Kernel) {
+//     let kx = Kernel {
+//         data: vec![-1.0, 0.0, 1.0, -2.0, 0.0, 2.0, -1.0, 0.0, 1.0],
+//         size: 3,
+//     };
+//     let ky = Kernel {
+//         data: vec![-1.0, -2.0, -1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 1.0],
+//         size: 3,
+//     };
+//     (kx, ky)
+// }
+
+// pub fn freichen_operator() -> (Kernel, Kernel) {
+//     let sqrt_2 = (2.0 as Real).sqrt();
+//     let kx = Kernel {
+//         data: vec![-1.0, 0.0, 1.0, -sqrt_2, 0.0, sqrt_2, -1.0, 0.0, 1.0],
+//         size: 3,
+//     };
+//     let ky = Kernel {
+//         data: vec![-1.0, -sqrt_2, -1.0, 0.0, 0.0, 0.0, 1.0, sqrt_2, 1.0],
+//         size: 3,
+//     };
+//     (kx, ky)
+// }
 
 pub fn accumulation() -> Kernel {
     Kernel {
@@ -382,130 +382,3 @@ pub fn accumulation() -> Kernel {
         size: 3,
     }
 }
-
-// pub struct Pipeline {
-//     pub device: GpuDevice,
-//     encoder: wgpu::CommandEncoder,
-// }
-
-// impl Pipeline {
-//     pub fn new() -> Self {
-//         let device = create_gpu_device();
-//         let encoder = device
-//             .device
-//             .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-//         Pipeline { device, encoder }
-//     }
-
-//     pub fn chain(
-//         &mut self,
-//         input_buffer: &wgpu::Buffer,
-//         kernel: &Kernel,
-//         image_size: (u32, u32),
-//         shader: wgpu::ShaderSource<'_>,
-//     ) -> (wgpu::Buffer, (u32, u32)) {
-//         let (width, height) = image_size;
-//         let crop = kernel.size - 1;
-//         let output = Image {
-//             data: Vec::new(),
-//             width: width - crop,
-//             height: height - crop,
-//         };
-//         let output_size = (output.size() * std::mem::size_of::<Real>() as u32) as u64;
-//         let result_buffer = self.device.create_buffer("result", output_size);
-//         let kernel_buffer = self
-//             .device
-//             .create_data_buffer("kernel", bytemuck::cast_slice(&kernel.data));
-//         let params = [width, kernel.size];
-//         let params_data = bytemuck::cast_slice(&params);
-//         let params_buffer = self.device.create_uniform_buffer("params", params_data);
-
-//         // create bind group and compute pipeline
-//         let (bind_group, compute_pipeline) = self.device.create_compute_pipeline(
-//             &[
-//                 (
-//                     input_buffer,
-//                     4,
-//                     wgpu::BufferBindingType::Storage { read_only: true },
-//                 ),
-//                 (
-//                     &result_buffer,
-//                     4,
-//                     wgpu::BufferBindingType::Storage { read_only: false },
-//                 ),
-//                 (
-//                     &kernel_buffer,
-//                     4,
-//                     wgpu::BufferBindingType::Storage { read_only: true },
-//                 ),
-//                 (
-//                     &params_buffer,
-//                     params_data.len() as u64,
-//                     wgpu::BufferBindingType::Uniform,
-//                 ),
-//             ],
-//             shader,
-//         );
-
-//         let mut cpass = self
-//             .encoder
-//             .begin_compute_pass(&wgpu::ComputePassDescriptor {
-//                 label: None,
-//                 ..Default::default()
-//             });
-//         cpass.set_bind_group(0, &bind_group, &[]);
-//         cpass.set_pipeline(&compute_pipeline);
-//         cpass.dispatch_workgroups(output.width, output.height, 1);
-
-//         (result_buffer, (output.width, output.height))
-//     }
-
-//     pub async fn run<T: bytemuck::Pod>(
-//         mut self,
-//         output_buffers: &[(&wgpu::Buffer, (u32, u32), u32)],
-//     ) -> Vec<Vec<T>> {
-//         let mut output_offset_sizes = Vec::with_capacity(output_buffers.len());
-//         let mut offset = 0;
-//         for (result, image_size, pixel_size) in output_buffers {
-//             let size = (image_size.0 * image_size.1 * pixel_size) as u64;
-//             output_offset_sizes.push((result, offset, size));
-//             offset += size;
-//         }
-//         let output_buffer = self.device.create_output_buffer("output", offset);
-//         for (result, offset, size) in output_offset_sizes {
-//             self.encoder
-//                 .copy_buffer_to_buffer(result, 0, &output_buffer, offset, size);
-//         }
-//         self.device.queue.submit(Some(self.encoder.finish()));
-
-//         // Read output
-//         let buffer_slice = output_buffer.slice(..);
-
-//         buffer_slice.map_async(wgpu::MapMode::Read, |_r| {});
-
-//         self.device.device.poll(wgpu::Maintain::Wait);
-
-//         // Awaits until `buffer_future` can be read from
-//         let data = buffer_slice.get_mapped_range();
-//         let mut output = bytemuck::cast_slice::<u8, T>(&data).to_vec();
-
-//         // We have to make sure all mapped views are dropped before we unmap the buffer.
-//         drop(data);
-//         output_buffer.unmap();
-
-//         let mut outputs = Vec::with_capacity(output_buffers.len());
-//         for (_, image_size, _) in output_buffers {
-//             let size = (image_size.0 * image_size.1) as usize;
-//             let remained_data = output.split_off(size);
-//             outputs.push(output);
-//             output = remained_data;
-//         }
-//         outputs
-//     }
-// }
-
-// impl Default for Pipeline {
-//     fn default() -> Self {
-//         Self::new()
-//     }
-// }

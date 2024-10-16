@@ -116,7 +116,8 @@ where
             .iter()
             .fold(0, |acc, &s| acc | (1 << s));
 
-        let output_size = (output.size() * std::mem::size_of::<Real>() as u32) as u64;
+        let output_size =
+            (output.width * output.height * std::mem::size_of::<Real>() as u32) as u64;
         let params = vec![image.width, image.height, 8, b_num, s_num];
         let params_data = bytemuck::cast_slice(&params);
 

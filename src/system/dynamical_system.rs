@@ -65,6 +65,9 @@ where
 
         new_nodes.par_iter_mut().enumerate().for_each(|(i, node)| {
             let neighbors = self.space.node_neighbors().get(&i).unwrap().to_owned();
+
+            // println!("i: {}, neighbors: {:?}", i, neighbors);
+
             let neighbor_nodes = neighbors
                 .iter()
                 .map(|i| self.space.nodes()[*i].clone())

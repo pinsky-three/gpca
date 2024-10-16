@@ -17,7 +17,7 @@ where
 
         for i in 0..(width as i32) {
             for j in 0..(height as i32) {
-                let index = i * (width as i32) + j;
+                let index = j * (width as i32) + i;
                 let mut local_neighborhood = Vec::<(Vec<usize>, E)>::new();
 
                 for x in [-1, 0, 1] {
@@ -28,7 +28,7 @@ where
 
                         let dx = i + x;
                         let dx = if dx < 0 {
-                            width as i32 - 1
+                            width as i32 - 1 // + dx
                         } else if dx >= width as i32 {
                             0
                         } else {
@@ -37,14 +37,14 @@ where
 
                         let dy = j + y;
                         let dy = if dy < 0 {
-                            height as i32 - 1
+                            height as i32 - 1 // + dy
                         } else if dy >= height as i32 {
                             0
                         } else {
                             dy
                         };
 
-                        let neighbor_index = dx * width as i32 + dy;
+                        let neighbor_index = dy * width as i32 + dx;
 
                         local_neighborhood
                             .push((vec![neighbor_index as usize], default_edge.clone()));
