@@ -1,18 +1,4 @@
-// use crate::gpu_device::*;
-// use crate::{Image, Kernel, Real};
-
 pub type Real = f32;
-
-// pub mod convolution;
-// pub mod gpu_device;
-// mod image;
-// pub mod kernels;
-// mod pipeline;
-
-// pub use crate::image::Image;
-// pub use kernels::Kernel;
-// pub use pipeline::Pipeline;
-
 pub enum BorderType {
     Crop,
     Mirror,
@@ -21,19 +7,26 @@ pub enum BorderType {
 
 pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
     let crop = kernel.size - 1;
+
     let mut output = Image {
         data: Vec::new(),
         width: image.width - crop,
         height: image.height - crop,
     };
+
+    let neighbors_example: Vec<f32> = vec![
+        -1.0, -1.0, -1.0, 0.0, -1.0, 1.0, 0.0, -1.0, 0.0, 1.0, 1.0, -1.0, 1.0, 0.0, 1.0, 1.0,
+    ];
+
     let output_size = (output.size() * std::mem::size_of::<Real>() as u32) as u64;
-    let params = [image.width, kernel.size];
+    let params = [image.width, kernel.size, 2];
     let params_data = bytemuck::cast_slice(&params);
 
     // create input and output buffers
     let input_buffer = device.create_data_buffer("input", bytemuck::cast_slice(&image.data));
     let result_buffer = device.create_buffer("result", output_size);
-    let kernel_buffer = device.create_data_buffer("kernel", bytemuck::cast_slice(&kernel.data));
+    let kernel_buffer =
+        device.create_data_buffer("kernel", bytemuck::cast_slice(&neighbors_example));
     let params_buffer = device.create_uniform_buffer("params", params_data);
     let output_buffer = device.create_output_buffer("output", output_size);
 
@@ -87,14 +80,7 @@ pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
 
     buffer_slice.map_async(wgpu::MapMode::Read, |_r| {});
 
-    // let buffer_future = buffer_slice.map_async(wgpu::MapMode::Read);
     device.device.poll(wgpu::Maintain::Wait);
-
-    // Awaits until `buffer_future` can be read from
-    // if let Ok(()) = buffer_future.await {
-    // } else {
-    //     panic!("failed to run compute on gpu!")
-    // }
 
     let data = buffer_slice.get_mapped_range();
     output.data = bytemuck::cast_slice::<u8, f32>(&data).to_vec();
