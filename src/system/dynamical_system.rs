@@ -1,4 +1,4 @@
-use std::hash::Hash;
+use std::{hash::Hash, ops::Deref};
 
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
@@ -56,6 +56,10 @@ where
         &self.space
     }
 
+    pub fn dynamic(&self) -> &D {
+        &self.dynamic
+    }
+
     pub fn compute_sync(&mut self) {
         let mut new_nodes = self.space.nodes().clone();
 
@@ -108,6 +112,8 @@ where
                 height: h as u32,
             },
             &kernel,
+            self.update_wgsl_code(),
+            self.deref(),
         ));
 
         let res_data_len = output.data.len();

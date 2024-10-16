@@ -5,93 +5,21 @@ pub enum BorderType {
     Zero,
 }
 
-pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
-    let crop = kernel.size - 1;
+pub async fn run<N, E>(
+    device: &GpuDevice,
+    image: &Image,
+    kernel: &Kernel,
+    shader: wgpu::ShaderSource<'_>,
 
-    let mut output = Image {
-        data: Vec::new(),
-        width: image.width - crop,
-        height: image.height - crop,
-    };
-
-    let neighbors_example: Vec<[i32; 2]> = vec![
-        [-1, -1],
-        [-1, 0],
-        [-1, 1],
-        [0, -1],
-        [0, 1],
-        [1, -1],
-        [1, 0],
-        [1, 1],
-    ];
-
-    let b_list = vec![3u32];
-    let s_list = vec![2u32, 3];
-
-    let mut acc: u32 = 0;
-    for b in &b_list {
-        acc |= 1 << b;
-    }
-
-    let b_num = acc;
-
-    acc = 0;
-
-    for s in &s_list {
-        acc |= 1 << s;
-    }
-
-    let s_num = acc;
-
-    // println!("b_num: {}, s_num: {}", b_num, s_num);
-
-    let output_size = (output.size() * std::mem::size_of::<Real>() as u32) as u64;
-    let params = vec![image.width, image.height, 8, b_num, s_num];
-    let params_data = bytemuck::cast_slice(&params);
-
-    // create input and output buffers
-    let input_buffer = device.create_data_buffer("input", bytemuck::cast_slice(&image.data));
-    let result_buffer = device.create_buffer("result", output_size);
-    let neighbors_buffer =
-        device.create_data_buffer("neighbors", bytemuck::cast_slice(&neighbors_example));
-    let params_buffer = device.create_uniform_buffer("params", params_data);
-    let output_buffer = device.create_output_buffer("output", output_size);
-
-    // let rule_data = vec![b_num, s_num];
-
-    // let rule_buffer = device.create_data_buffer("rule", bytemuck::cast_slice(&rule_data));
-
-    // create bind group and compute pipeline
-    let (bind_group, compute_pipeline) = device.create_compute_pipeline(
-        &[
-            (
-                &input_buffer,
-                4,
-                wgpu::BufferBindingType::Storage { read_only: false },
-            ),
-            (
-                &result_buffer,
-                4,
-                wgpu::BufferBindingType::Storage { read_only: false },
-            ),
-            (
-                &neighbors_buffer,
-                8,
-                wgpu::BufferBindingType::Storage { read_only: false },
-            ),
-            (
-                &params_buffer,
-                params_data.len() as u64,
-                wgpu::BufferBindingType::Uniform,
-            ),
-            // (
-            //     &rule_buffer,
-            //     rule_data.len() as u64,
-            //     wgpu::BufferBindingType::Storage { read_only: true },
-            // ),
-        ],
-        include_str!("convolution.wgsl"),
-    );
+    dynamic: &impl LatticeComputable<N, E>,
+) -> Image
+where
+    N: Clone + Sync + Send + Hash + Eq + Stateable,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+{
+    let (mut output, output_size, result_buffer, output_buffer, bind_group, compute_pipeline) =
+        dynamic.wgsl_compute(kernel, image, device, shader);
+    // fun_name(kernel, image, device, shader);
 
     // encode and run commands
     let mut encoder = device
@@ -128,8 +56,10 @@ pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
     output
 }
 
-use std::borrow::Cow;
+use std::hash::Hash;
 use wgpu::util::DeviceExt;
+
+use crate::spaces::{lattice::LatticeComputable, local::Stateable};
 
 pub struct GpuDevice {
     pub(crate) device: wgpu::Device,
@@ -248,7 +178,7 @@ impl GpuDevice {
     pub fn create_compute_pipeline(
         &self,
         buffers: &[(&wgpu::Buffer, u64, wgpu::BufferBindingType)],
-        shader: &str,
+        shader: wgpu::ShaderSource,
     ) -> (wgpu::BindGroup, wgpu::ComputePipeline) {
         let (bind_group_layout, bind_group) = self.create_bind_group(buffers);
 
@@ -257,8 +187,8 @@ impl GpuDevice {
             .device
             .create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: None,
-                source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(shader)),
-                // flags: wgpu::ShaderFlags::VALIDATION,
+                source: shader, //wgpu::ShaderSource::Wgsl(Cow::Borrowed(shader)),
+                                // flags: wgpu::ShaderFlags::VALIDATION,
             });
 
         // create pipeline for shader
@@ -453,128 +383,129 @@ pub fn accumulation() -> Kernel {
     }
 }
 
-pub struct Pipeline {
-    pub device: GpuDevice,
-    encoder: wgpu::CommandEncoder,
-}
+// pub struct Pipeline {
+//     pub device: GpuDevice,
+//     encoder: wgpu::CommandEncoder,
+// }
 
-impl Pipeline {
-    pub fn new() -> Self {
-        let device = create_gpu_device();
-        let encoder = device
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-        Pipeline { device, encoder }
-    }
+// impl Pipeline {
+//     pub fn new() -> Self {
+//         let device = create_gpu_device();
+//         let encoder = device
+//             .device
+//             .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+//         Pipeline { device, encoder }
+//     }
 
-    pub fn chain(
-        &mut self,
-        input_buffer: &wgpu::Buffer,
-        kernel: &Kernel,
-        image_size: (u32, u32),
-    ) -> (wgpu::Buffer, (u32, u32)) {
-        let (width, height) = image_size;
-        let crop = kernel.size - 1;
-        let output = Image {
-            data: Vec::new(),
-            width: width - crop,
-            height: height - crop,
-        };
-        let output_size = (output.size() * std::mem::size_of::<Real>() as u32) as u64;
-        let result_buffer = self.device.create_buffer("result", output_size);
-        let kernel_buffer = self
-            .device
-            .create_data_buffer("kernel", bytemuck::cast_slice(&kernel.data));
-        let params = [width, kernel.size];
-        let params_data = bytemuck::cast_slice(&params);
-        let params_buffer = self.device.create_uniform_buffer("params", params_data);
+//     pub fn chain(
+//         &mut self,
+//         input_buffer: &wgpu::Buffer,
+//         kernel: &Kernel,
+//         image_size: (u32, u32),
+//         shader: wgpu::ShaderSource<'_>,
+//     ) -> (wgpu::Buffer, (u32, u32)) {
+//         let (width, height) = image_size;
+//         let crop = kernel.size - 1;
+//         let output = Image {
+//             data: Vec::new(),
+//             width: width - crop,
+//             height: height - crop,
+//         };
+//         let output_size = (output.size() * std::mem::size_of::<Real>() as u32) as u64;
+//         let result_buffer = self.device.create_buffer("result", output_size);
+//         let kernel_buffer = self
+//             .device
+//             .create_data_buffer("kernel", bytemuck::cast_slice(&kernel.data));
+//         let params = [width, kernel.size];
+//         let params_data = bytemuck::cast_slice(&params);
+//         let params_buffer = self.device.create_uniform_buffer("params", params_data);
 
-        // create bind group and compute pipeline
-        let (bind_group, compute_pipeline) = self.device.create_compute_pipeline(
-            &[
-                (
-                    input_buffer,
-                    4,
-                    wgpu::BufferBindingType::Storage { read_only: true },
-                ),
-                (
-                    &result_buffer,
-                    4,
-                    wgpu::BufferBindingType::Storage { read_only: false },
-                ),
-                (
-                    &kernel_buffer,
-                    4,
-                    wgpu::BufferBindingType::Storage { read_only: true },
-                ),
-                (
-                    &params_buffer,
-                    params_data.len() as u64,
-                    wgpu::BufferBindingType::Uniform,
-                ),
-            ],
-            include_str!("convolution.wgsl"),
-        );
+//         // create bind group and compute pipeline
+//         let (bind_group, compute_pipeline) = self.device.create_compute_pipeline(
+//             &[
+//                 (
+//                     input_buffer,
+//                     4,
+//                     wgpu::BufferBindingType::Storage { read_only: true },
+//                 ),
+//                 (
+//                     &result_buffer,
+//                     4,
+//                     wgpu::BufferBindingType::Storage { read_only: false },
+//                 ),
+//                 (
+//                     &kernel_buffer,
+//                     4,
+//                     wgpu::BufferBindingType::Storage { read_only: true },
+//                 ),
+//                 (
+//                     &params_buffer,
+//                     params_data.len() as u64,
+//                     wgpu::BufferBindingType::Uniform,
+//                 ),
+//             ],
+//             shader,
+//         );
 
-        let mut cpass = self
-            .encoder
-            .begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: None,
-                ..Default::default()
-            });
-        cpass.set_bind_group(0, &bind_group, &[]);
-        cpass.set_pipeline(&compute_pipeline);
-        cpass.dispatch_workgroups(output.width, output.height, 1);
+//         let mut cpass = self
+//             .encoder
+//             .begin_compute_pass(&wgpu::ComputePassDescriptor {
+//                 label: None,
+//                 ..Default::default()
+//             });
+//         cpass.set_bind_group(0, &bind_group, &[]);
+//         cpass.set_pipeline(&compute_pipeline);
+//         cpass.dispatch_workgroups(output.width, output.height, 1);
 
-        (result_buffer, (output.width, output.height))
-    }
+//         (result_buffer, (output.width, output.height))
+//     }
 
-    pub async fn run<T: bytemuck::Pod>(
-        mut self,
-        output_buffers: &[(&wgpu::Buffer, (u32, u32), u32)],
-    ) -> Vec<Vec<T>> {
-        let mut output_offset_sizes = Vec::with_capacity(output_buffers.len());
-        let mut offset = 0;
-        for (result, image_size, pixel_size) in output_buffers {
-            let size = (image_size.0 * image_size.1 * pixel_size) as u64;
-            output_offset_sizes.push((result, offset, size));
-            offset += size;
-        }
-        let output_buffer = self.device.create_output_buffer("output", offset);
-        for (result, offset, size) in output_offset_sizes {
-            self.encoder
-                .copy_buffer_to_buffer(result, 0, &output_buffer, offset, size);
-        }
-        self.device.queue.submit(Some(self.encoder.finish()));
+//     pub async fn run<T: bytemuck::Pod>(
+//         mut self,
+//         output_buffers: &[(&wgpu::Buffer, (u32, u32), u32)],
+//     ) -> Vec<Vec<T>> {
+//         let mut output_offset_sizes = Vec::with_capacity(output_buffers.len());
+//         let mut offset = 0;
+//         for (result, image_size, pixel_size) in output_buffers {
+//             let size = (image_size.0 * image_size.1 * pixel_size) as u64;
+//             output_offset_sizes.push((result, offset, size));
+//             offset += size;
+//         }
+//         let output_buffer = self.device.create_output_buffer("output", offset);
+//         for (result, offset, size) in output_offset_sizes {
+//             self.encoder
+//                 .copy_buffer_to_buffer(result, 0, &output_buffer, offset, size);
+//         }
+//         self.device.queue.submit(Some(self.encoder.finish()));
 
-        // Read output
-        let buffer_slice = output_buffer.slice(..);
+//         // Read output
+//         let buffer_slice = output_buffer.slice(..);
 
-        buffer_slice.map_async(wgpu::MapMode::Read, |_r| {});
+//         buffer_slice.map_async(wgpu::MapMode::Read, |_r| {});
 
-        self.device.device.poll(wgpu::Maintain::Wait);
+//         self.device.device.poll(wgpu::Maintain::Wait);
 
-        // Awaits until `buffer_future` can be read from
-        let data = buffer_slice.get_mapped_range();
-        let mut output = bytemuck::cast_slice::<u8, T>(&data).to_vec();
+//         // Awaits until `buffer_future` can be read from
+//         let data = buffer_slice.get_mapped_range();
+//         let mut output = bytemuck::cast_slice::<u8, T>(&data).to_vec();
 
-        // We have to make sure all mapped views are dropped before we unmap the buffer.
-        drop(data);
-        output_buffer.unmap();
+//         // We have to make sure all mapped views are dropped before we unmap the buffer.
+//         drop(data);
+//         output_buffer.unmap();
 
-        let mut outputs = Vec::with_capacity(output_buffers.len());
-        for (_, image_size, _) in output_buffers {
-            let size = (image_size.0 * image_size.1) as usize;
-            let remained_data = output.split_off(size);
-            outputs.push(output);
-            output = remained_data;
-        }
-        outputs
-    }
-}
+//         let mut outputs = Vec::with_capacity(output_buffers.len());
+//         for (_, image_size, _) in output_buffers {
+//             let size = (image_size.0 * image_size.1) as usize;
+//             let remained_data = output.split_off(size);
+//             outputs.push(output);
+//             output = remained_data;
+//         }
+//         outputs
+//     }
+// }
 
-impl Default for Pipeline {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// impl Default for Pipeline {
+//     fn default() -> Self {
+//         Self::new()
+//     }
+// }
