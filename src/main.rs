@@ -14,7 +14,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 #[tokio::main]
 async fn main() {
-    const W: u32 = 2048;
+    const W: u32 = 1024;
     const H: u32 = W;
 
     const STATES: u32 = 2;

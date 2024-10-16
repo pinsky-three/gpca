@@ -3,13 +3,15 @@ struct Image {
 };
 
 struct Neighbourhood {
-    data: array<vec2<i32>>,  // Coordenadas relativas de los vecinos
+    data: array<vec2<i32>>,
 };
 
 struct Params {
     image_width: u32,
     image_height: u32,
-    neighbour_count: u32,  // 8 vecinos en el Game of Life
+    neighbour_count: u32,
+    b_num: u32,
+    s_num: u32,
 };
 
 @group(0) @binding(0)
@@ -28,7 +30,7 @@ var<uniform> params: Params;
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     var width: u32 = params.image_width;
     var height: u32 = params.image_height;
-    
+
     var x: u32 = global_id.x;
     var y: u32 = global_id.y;
 
@@ -51,12 +53,21 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     var value: f32 = 0.0;
-    if (sum_neighbours == 3.0) {
-        value = 1.0;  // Nace una nueva celda
-    } else if (sum_neighbours == 2.0) {
-        value = input.data[index_0];  // Sobrevive
-    } else {
-        value = 0.0;  // Muere
+
+    var one: u32 = 1;
+
+    for (var i: u32 = 0; i < 8; i = i + 1) {
+        var b: bool = bool(params.b_num & (one<<i));
+        var s: bool = bool(params.s_num & (one<<i));
+
+        if (s == true && sum_neighbours == f32(i)) {
+            value = input.data[index_0];
+        } 
+        
+        if (b == true && sum_neighbours == f32(i)) {
+            value = 1.0;
+        }
+        
     }
 
     result.data[index_0] = value;

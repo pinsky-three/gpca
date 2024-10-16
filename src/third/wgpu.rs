@@ -25,8 +25,28 @@ pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
         [1, 1],
     ];
 
+    let b_list = vec![3u32];
+    let s_list = vec![2u32, 3];
+
+    let mut acc: u32 = 0;
+    for b in &b_list {
+        acc |= 1 << b;
+    }
+
+    let b_num = acc;
+
+    acc = 0;
+
+    for s in &s_list {
+        acc |= 1 << s;
+    }
+
+    let s_num = acc;
+
+    // println!("b_num: {}, s_num: {}", b_num, s_num);
+
     let output_size = (output.size() * std::mem::size_of::<Real>() as u32) as u64;
-    let params = [image.width, image.height, 8];
+    let params = vec![image.width, image.height, 8, b_num, s_num];
     let params_data = bytemuck::cast_slice(&params);
 
     // create input and output buffers
@@ -36,6 +56,10 @@ pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
         device.create_data_buffer("neighbors", bytemuck::cast_slice(&neighbors_example));
     let params_buffer = device.create_uniform_buffer("params", params_data);
     let output_buffer = device.create_output_buffer("output", output_size);
+
+    // let rule_data = vec![b_num, s_num];
+
+    // let rule_buffer = device.create_data_buffer("rule", bytemuck::cast_slice(&rule_data));
 
     // create bind group and compute pipeline
     let (bind_group, compute_pipeline) = device.create_compute_pipeline(
@@ -60,6 +84,11 @@ pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
                 params_data.len() as u64,
                 wgpu::BufferBindingType::Uniform,
             ),
+            // (
+            //     &rule_buffer,
+            //     rule_data.len() as u64,
+            //     wgpu::BufferBindingType::Storage { read_only: true },
+            // ),
         ],
         include_str!("convolution.wgsl"),
     );
