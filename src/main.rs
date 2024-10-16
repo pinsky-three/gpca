@@ -14,7 +14,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 #[tokio::main]
 async fn main() {
-    const W: u32 = 512;
+    const W: u32 = 2048;
     const H: u32 = W;
 
     const STATES: u32 = 2;
@@ -27,7 +27,7 @@ async fn main() {
 
     let mut system = DynamicalSystem::new(Box::new(space), Box::new(dynamic));
 
-    for _ in tqdm!(0..10) {
+    for _ in tqdm!(0..1000) {
         system.compute_sync_wgpu(&device);
     }
 
@@ -35,7 +35,7 @@ async fn main() {
         .space_state()
         .par_iter()
         .map(|x| x.state() as u8)
-        .collect::<Vec<u8>>(); //.map(|x| x.state() as u32);
+        .collect::<Vec<u8>>();
 
     let mut img = RgbImage::new(W, H);
 

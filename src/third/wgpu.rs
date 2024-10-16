@@ -14,19 +14,26 @@ pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
         height: image.height - crop,
     };
 
-    let neighbors_example: Vec<f32> = vec![
-        -1.0, -1.0, -1.0, 0.0, -1.0, 1.0, 0.0, -1.0, 0.0, 1.0, 1.0, -1.0, 1.0, 0.0, 1.0, 1.0,
+    let neighbors_example: Vec<[i32; 2]> = vec![
+        [-1, -1],
+        [-1, 0],
+        [-1, 1],
+        [0, -1],
+        [0, 1],
+        [1, -1],
+        [1, 0],
+        [1, 1],
     ];
 
     let output_size = (output.size() * std::mem::size_of::<Real>() as u32) as u64;
-    let params = [image.width, kernel.size, 2];
+    let params = [image.width, image.height, 8];
     let params_data = bytemuck::cast_slice(&params);
 
     // create input and output buffers
     let input_buffer = device.create_data_buffer("input", bytemuck::cast_slice(&image.data));
     let result_buffer = device.create_buffer("result", output_size);
-    let kernel_buffer =
-        device.create_data_buffer("kernel", bytemuck::cast_slice(&neighbors_example));
+    let neighbors_buffer =
+        device.create_data_buffer("neighbors", bytemuck::cast_slice(&neighbors_example));
     let params_buffer = device.create_uniform_buffer("params", params_data);
     let output_buffer = device.create_output_buffer("output", output_size);
 
@@ -44,8 +51,8 @@ pub async fn run(device: &GpuDevice, image: &Image, kernel: &Kernel) -> Image {
                 wgpu::BufferBindingType::Storage { read_only: false },
             ),
             (
-                &kernel_buffer,
-                4,
+                &neighbors_buffer,
+                8,
                 wgpu::BufferBindingType::Storage { read_only: false },
             ),
             (
