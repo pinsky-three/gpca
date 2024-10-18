@@ -1,5 +1,5 @@
 use gpca::{
-    dynamics::implementations::{cyclic::CyclicAutomaton, life::LifeLike},
+    dynamics::implementations::cyclic::CyclicAutomaton,
     spaces::{
         implementations::basic::{DiscreteState, HyperGraphHeap},
         local::Stateable,
@@ -18,6 +18,7 @@ async fn main() {
     const H: u32 = 2048;
 
     const STATES: u32 = 4;
+    const THRESH: u32 = 3;
 
     let _device = create_gpu_device();
 
@@ -25,7 +26,7 @@ async fn main() {
 
     // let dynamic = LifeLike::new(&[3], &[2, 3, 7, 8]); // highlife+
 
-    let dynamic = CyclicAutomaton::new(STATES, 3);
+    let dynamic = CyclicAutomaton::new(STATES, THRESH);
 
     let mut system = DynamicalSystem::new(Box::new(space), Box::new(dynamic));
 
