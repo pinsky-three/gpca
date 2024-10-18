@@ -36,15 +36,16 @@ where
     }
 
     fn update(&self, node: &N, nodes: &[N], _edges: Vec<&HyperEdge<E>>) -> N {
+        let next_state = (node.state() + 1) % self.states;
+
         let total_successors = nodes
             .iter()
             .map(|n| n.state())
-            .filter(|&n| n == (node.state() + 1) % self.states)
+            .filter(|&n| n == next_state)
             .count();
 
         if total_successors >= self.threshold as usize {
-            let a: u32 = (node.state() + 1) % self.states;
-            N::from_state(a)
+            N::from_state(next_state)
         } else {
             node.clone()
         }
@@ -111,12 +112,17 @@ where
 
         let neighbors = observation.iter().flatten().copied().collect::<Vec<i32>>();
 
-        let b_num = self.dynamic().states;
-        let s_num = self.dynamic().threshold;
+        let automaton_states = self.dynamic().states;
+        let automaton_threshold = self.dynamic().threshold;
 
         let output_size =
             (output.width * output.height * std::mem::size_of::<Real>() as u32) as u64;
-        let params = vec![image.width, image.height, 8, b_num, s_num];
+        let params = vec![
+            image.width,
+            image.height,
+            automaton_states,
+            automaton_threshold,
+        ];
         let params_data = bytemuck::cast_slice(&params);
 
         // create input and output buffers

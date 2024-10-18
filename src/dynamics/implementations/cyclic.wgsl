@@ -14,6 +14,8 @@ var<storage, read_write> kernel: Image;
 struct Params {
     image_width: u32,
     kernel_size: u32,
+    states: u32,
+    threshold: u32,
 };
 
 @group(0) @binding(3)
@@ -24,8 +26,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     var width: u32 = params.image_width;
     var size: u32 = params.kernel_size;
 
-    var states: u32 = 6;
-    var threshold: u32 = 1;
+    var states: u32 = params.states;
+    var threshold: u32 = params.threshold;
 
     var x: u32 = global_id.x;
     var y: u32 = global_id.y;
@@ -41,23 +43,23 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     var index_7: u32 = (y+1u) * width + (x-1u);
     var index_8: u32 = (y+1u) * width + (x+1u);
 
-    var i: u32 = u32(input.data[index_0]);
+    var current_state: u32 = u32(input.data[index_0]);
 
-    var i_1: f32 = f32((i + 1u) % states);
+    var next_state: f32 = f32((current_state + 1u) % states);
 
-    var n: u32 = u32(input.data[index_1] == i_1) +
-            u32(input.data[index_2] == i_1) +
-            u32(input.data[index_3] == i_1) +
-            u32(input.data[index_4] == i_1) +
-            u32(input.data[index_5] == i_1) +
-            u32(input.data[index_6] == i_1) +
-            u32(input.data[index_7] == i_1) +
-            u32(input.data[index_8] == i_1);
+    var n: u32 = u32(input.data[index_1] == next_state) +
+            u32(input.data[index_2] == next_state) +
+            u32(input.data[index_3] == next_state) +
+            u32(input.data[index_4] == next_state) +
+            u32(input.data[index_5] == next_state) +
+            u32(input.data[index_6] == next_state) +
+            u32(input.data[index_7] == next_state) +
+            u32(input.data[index_8] == next_state);
 
-    var value: f32 = f32(i);
+    var value: f32 = f32(current_state);
 
-    if (n > threshold) {
-        value = i_1;
+    if (n >= threshold) {
+        value = next_state;
     }
 
     result.data[index_0] = value;
