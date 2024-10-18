@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::HashMap, fmt::Debug, hash::Hash};
 
 use rand::{rngs::ThreadRng, Rng};
 use rayon::iter::{
@@ -32,23 +32,49 @@ impl Stateable for DiscreteState {
     }
 }
 
+// #[derive(Debug)]
 pub struct HyperGraphHeap<N, E, P>
 where
-    N: Clone + Sync + Send + Hash + Eq + Stateable,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+    N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
+    P: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
 {
     nodes: Vec<N>,
+
     edges: HashMap<usize, HyperEdge<E>>,
     node_neighbors: HashMap<usize, Vec<usize>>,
 
     payload: P,
 }
 
+impl<N, E, P> Debug for HyperGraphHeap<N, E, P>
+where
+    N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
+    P: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        let HyperGraphHeap {
+            nodes,
+            edges: _,
+            node_neighbors,
+            payload,
+        } = self;
+
+        f.debug_struct("HyperGraphHeap")
+            .field("nodes", &nodes)
+            // .field("edges", &edges)
+            .field("node_neighbors", &node_neighbors)
+            .field("payload", &payload)
+            .finish()
+    }
+}
+
 impl<N, E, P> LocalHyperGraph<N, E> for HyperGraphHeap<N, E, P>
 where
-    N: Clone + Sync + Send + Hash + Eq + Stateable,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
-    P: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+    N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
+    P: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
 {
     fn nodes(&self) -> &Vec<N> {
         &self.nodes
@@ -73,9 +99,9 @@ where
 
 impl<N, E, P> HyperGraphHeap<N, E, P>
 where
-    N: Clone + Sync + Send + Hash + Eq + Stateable,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
-    P: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+    N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
+    P: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
 {
     pub fn payload(&self) -> &P {
         &self.payload
@@ -84,9 +110,9 @@ where
 
 impl<N, E, P> HyperGraphHeap<N, E, P>
 where
-    N: Clone + Sync + Send + Hash + Eq + Stateable,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
-    P: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Default,
+    N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
+    P: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Default + Debug,
 {
     pub fn from_nodes_and_edges(
         nodes: Vec<N>,
@@ -123,13 +149,6 @@ where
                 } else {
                     vec![]
                 }
-                // let neighbors = edges.get(&i).unwrap().to_owned();
-
-                // neighbors
-                //     .iter()
-                //     .flat_map(|i| &i.0)
-                //     .copied()
-                //     .collect::<Vec<usize>>()
             })
             .collect::<Vec<Vec<usize>>>();
 

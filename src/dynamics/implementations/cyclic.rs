@@ -14,43 +14,50 @@ use crate::{
 };
 
 #[derive(Clone, Hash, Eq, PartialEq, Debug)]
-pub struct LifeLike {
-    b_list: &'static [u32],
-    s_list: &'static [u32],
+pub struct CyclicAutomaton {
+    states: u32,
+    threshold: u32,
 }
 
-impl LifeLike {
-    pub fn new(b_list: &'static [u32], s_list: &'static [u32]) -> Self {
-        Self { b_list, s_list }
+impl CyclicAutomaton {
+    pub fn new(states: u32, threshold: u32) -> Self {
+        Self { states, threshold }
     }
 }
 
-impl<N, E> LocalDynamic<N, E> for LifeLike
+impl<N, E> LocalDynamic<N, E> for CyclicAutomaton
 where
     N: Clone + Sync + Send + Hash + Eq + Stateable,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
     Self: Clone + Send + Sync + Hash + Eq + PartialEq,
 {
     fn states(&self) -> u32 {
-        2
+        self.states
     }
 
     fn update(&self, node: &N, nodes: &[N], _edges: Vec<&HyperEdge<E>>) -> N {
-        let total = nodes.iter().map(|n| n.state()).sum();
+        let total_successors = nodes
+            .iter()
+            .map(|n| n.state())
+            .filter(|&n| n == (node.state() + 1) % self.states)
+            .count();
 
-        if self.b_list.contains(&total) {
-            let a: u32 = 1; //self.states() - 1;
+        if total_successors >= self.threshold as usize {
+            let a: u32 = (node.state() + 1) % self.states;
             N::from_state(a)
-        } else if self.s_list.contains(&total) {
-            node.clone()
         } else {
-            N::from_state(0)
+            node.clone()
         }
     }
 }
 
 impl<N, E> LatticeComputable<N, E>
-    for DynamicalSystem<HyperGraphHeap<DiscreteState, (), (u32, u32)>, LifeLike, DiscreteState, ()>
+    for DynamicalSystem<
+        HyperGraphHeap<DiscreteState, (), (u32, u32)>,
+        CyclicAutomaton,
+        DiscreteState,
+        (),
+    >
 where
     N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
@@ -75,7 +82,7 @@ where
     }
 
     fn update_wgsl_code(&self) -> ShaderSource {
-        wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("lifelike.wgsl")))
+        wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("cyclic.wgsl")))
     }
 
     fn wgsl_compute(
@@ -104,17 +111,8 @@ where
 
         let neighbors = observation.iter().flatten().copied().collect::<Vec<i32>>();
 
-        let b_num = self
-            .dynamic()
-            .b_list
-            .iter()
-            .fold(0, |acc, &b| acc | (1 << b));
-
-        let s_num = self
-            .dynamic()
-            .s_list
-            .iter()
-            .fold(0, |acc, &s| acc | (1 << s));
+        let b_num = self.dynamic().states;
+        let s_num = self.dynamic().threshold;
 
         let output_size =
             (output.width * output.height * std::mem::size_of::<Real>() as u32) as u64;

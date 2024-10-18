@@ -1,4 +1,4 @@
-use std::{hash::Hash, ops::Deref};
+use std::{fmt::Debug, hash::Hash, ops::Deref};
 
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
@@ -11,12 +11,13 @@ use crate::{
     third::wgpu::{self, accumulation, GpuDevice, Image},
 };
 
+#[derive(Debug)]
 pub struct DynamicalSystem<S, D, N, E>
 where
-    S: LocalHyperGraph<N, E>,
-    D: LocalDynamic<N, E>,
-    N: Clone + Sync + Send + Hash + Eq + Stateable,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+    S: LocalHyperGraph<N, E> + Debug,
+    D: LocalDynamic<N, E> + Debug,
+    N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
 {
     _id: String,
     space: Box<S>,
@@ -26,10 +27,10 @@ where
 
 impl<S, D, N, E> DynamicalSystem<S, D, N, E>
 where
-    S: LocalHyperGraph<N, E>,
-    D: LocalDynamic<N, E>,
-    N: Clone + Sync + Send + Hash + Eq + Stateable,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+    S: LocalHyperGraph<N, E> + Debug,
+    D: LocalDynamic<N, E> + Debug,
+    N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
 {
     pub fn new(space: Box<S>, dynamic: Box<D>) -> Self {
         Self {
@@ -43,10 +44,10 @@ where
 
 impl<S, D, N, E> DynamicalSystem<S, D, N, E>
 where
-    S: LocalHyperGraph<N, E>,
-    D: LocalDynamic<N, E>,
-    N: Clone + Sync + Send + Hash + Eq + Stateable,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+    S: LocalHyperGraph<N, E> + Debug,
+    D: LocalDynamic<N, E> + Debug,
+    N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
 {
     pub fn space_state(&self) -> Vec<N> {
         self.space.nodes().to_owned()
@@ -58,6 +59,10 @@ where
 
     pub fn dynamic(&self) -> &D {
         &self.dynamic
+    }
+
+    pub fn describe(&self) -> String {
+        format!("{:?}", self)
     }
 
     pub fn compute_sync(&mut self) {
@@ -83,10 +88,10 @@ where
 
 impl<S, D, N, E> DynamicalSystem<S, D, N, E>
 where
-    S: LocalHyperGraph<N, E>,
-    D: LocalDynamic<N, E>,
-    N: Clone + Sync + Send + Hash + Eq + Stateable,
-    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized,
+    S: LocalHyperGraph<N, E> + Debug,
+    D: LocalDynamic<N, E> + Debug,
+    N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
+    E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
     Self: LatticeComputable<N, E>,
 {
     pub fn compute_sync_wgpu(&mut self, device: &GpuDevice) {
