@@ -29,9 +29,9 @@ where
     let mut img = RgbImage::new(*width, *height);
 
     img.par_enumerate_pixels_mut().for_each(|(x, y, pixel)| {
-        let index = (y as usize * 2048) + x as usize;
-        let color =
-            colorous::RED_YELLOW_BLUE.eval_continuous(current_full_state[index] as f64 / 4.0);
+        let index = (y as usize * (*width as usize)) + x as usize;
+        let color = colorous::RED_YELLOW_BLUE
+            .eval_continuous(current_full_state[index] as f64 / system.dynamic().states() as f64);
         *pixel = Rgb([color.r, color.g, color.b]);
     });
 

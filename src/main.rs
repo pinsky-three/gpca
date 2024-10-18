@@ -12,7 +12,7 @@ async fn main() {
     const W: u32 = 1024;
     const H: u32 = 720;
 
-    const STATES: u32 = 6;
+    const STATES: u32 = 4;
     const THRESH: u32 = 2;
 
     let _device = create_gpu_device();
@@ -24,7 +24,7 @@ async fn main() {
 
     let mut system = DynamicalSystem::new(Box::new(space), Box::new(dynamic));
 
-    for _ in tqdm!(0..5000) {
+    for _ in tqdm!(0..500) {
         system.compute_sync_wgpu(&_device);
         // system.compute_sync();
     }
