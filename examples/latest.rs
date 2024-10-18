@@ -9,8 +9,8 @@ use kdam::tqdm;
 
 #[tokio::main]
 async fn main() {
-    const W: u32 = 1024;
-    const H: u32 = 720;
+    const W: u32 = 2048;
+    const H: u32 = 1024;
 
     const STATES: u32 = 4;
     const THRESH: u32 = 2;
@@ -29,5 +29,5 @@ async fn main() {
         // system.compute_sync();
     }
 
-    save_space_as_image(&system);
+    save_space_as_image(&system, colorous::PLASMA);
 }

@@ -13,7 +13,7 @@ use super::dynamical_system::DynamicalSystem;
 type Space<N> = HyperGraphHeap<N, (), (u32, u32)>;
 type System<N, D> = DynamicalSystem<Space<N>, D, N, ()>;
 
-pub fn save_space_as_image<N, D>(system: &System<N, D>)
+pub fn save_space_as_image<N, D>(system: &System<N, D>, color_map: colorous::Gradient)
 where
     N: Stateable + Send + Sync + Clone + Debug,
     D: LocalDynamic<N, ()> + Debug,
@@ -30,7 +30,7 @@ where
 
     img.par_enumerate_pixels_mut().for_each(|(x, y, pixel)| {
         let index = (y as usize * (*width as usize)) + x as usize;
-        let color = colorous::RED_YELLOW_BLUE
+        let color = color_map
             .eval_continuous(current_full_state[index] as f64 / system.dynamic().states() as f64);
         *pixel = Rgb([color.r, color.g, color.b]);
     });
