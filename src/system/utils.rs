@@ -13,10 +13,13 @@ use super::dynamical_system::DynamicalSystem;
 type Space<N> = HyperGraphHeap<N, (), (u32, u32)>;
 type System<N, D> = DynamicalSystem<Space<N>, D, N, ()>;
 
-pub fn save_space_as_image<N, D>(system: &System<N, D>, color_map: colorous::Gradient)
+pub fn generate_image_from_space<N, D>(
+    system: &System<N, D>,
+    color_map: colorous::Gradient,
+) -> RgbImage
 where
     N: Stateable + Send + Sync + Clone + Debug,
-    D: LocalDynamic<N, ()> + Debug,
+    D: LocalDynamic<N, ()> + Debug + Clone,
 {
     let (width, height) = system.space().payload();
 
@@ -35,5 +38,5 @@ where
         *pixel = Rgb([color.r, color.g, color.b]);
     });
 
-    img.save("hca_lifelike_test.png").unwrap();
+    img
 }

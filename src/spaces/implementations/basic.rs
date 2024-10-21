@@ -32,7 +32,7 @@ impl Stateable for DiscreteState {
     }
 }
 
-// #[derive(Debug)]
+#[derive(Clone)]
 pub struct HyperGraphHeap<N, E, P>
 where
     N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,

@@ -14,8 +14,8 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct DynamicalSystem<S, D, N, E>
 where
-    S: LocalHyperGraph<N, E> + Debug,
-    D: LocalDynamic<N, E> + Debug,
+    S: LocalHyperGraph<N, E> + Debug + Clone,
+    D: LocalDynamic<N, E> + Debug + Clone,
     N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
 {
@@ -27,8 +27,8 @@ where
 
 impl<S, D, N, E> DynamicalSystem<S, D, N, E>
 where
-    S: LocalHyperGraph<N, E> + Debug,
-    D: LocalDynamic<N, E> + Debug,
+    S: LocalHyperGraph<N, E> + Debug + Clone,
+    D: LocalDynamic<N, E> + Debug + Clone,
     N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
 {
@@ -44,8 +44,8 @@ where
 
 impl<S, D, N, E> DynamicalSystem<S, D, N, E>
 where
-    S: LocalHyperGraph<N, E> + Debug,
-    D: LocalDynamic<N, E> + Debug,
+    S: LocalHyperGraph<N, E> + Debug + Clone,
+    D: LocalDynamic<N, E> + Debug + Clone,
     N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
 {
@@ -88,8 +88,8 @@ where
 
 impl<S, D, N, E> DynamicalSystem<S, D, N, E>
 where
-    S: LocalHyperGraph<N, E> + Debug,
-    D: LocalDynamic<N, E> + Debug,
+    S: LocalHyperGraph<N, E> + Debug + Clone,
+    D: LocalDynamic<N, E> + Debug + Clone,
     N: Clone + Sync + Send + Hash + Eq + Stateable + Debug,
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
     Self: LatticeComputable<N, E>,

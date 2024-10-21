@@ -1,7 +1,7 @@
 use gpca::{
     dynamics::implementations::cyclic::CyclicAutomaton,
     spaces::implementations::basic::{DiscreteState, HyperGraphHeap},
-    system::{dynamical_system::DynamicalSystem, utils::save_space_as_image},
+    system::{dynamical_system::DynamicalSystem, utils::generate_image_from_space},
     third::wgpu::create_gpu_device,
 };
 
@@ -29,5 +29,7 @@ async fn main() {
         // system.compute_sync();
     }
 
-    save_space_as_image(&system, colorous::PLASMA);
+    let img = generate_image_from_space(&system, colorous::PLASMA);
+
+    img.save("output.png").unwrap();
 }
