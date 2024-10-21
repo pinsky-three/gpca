@@ -1,6 +1,6 @@
 [package]
 name = "gpca"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Rust implementation of the 'Async Hyper-Graph Cellular Automata' computational model."
 license = "MIT"
