@@ -11,7 +11,7 @@ use crate::{
     third::wgpu::{self, accumulation, GpuDevice, Image},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DynamicalSystem<S, D, N, E>
 where
     S: LocalHyperGraph<N, E> + Debug,
