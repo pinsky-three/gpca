@@ -1,6 +1,6 @@
 [package]
 name = "gpca"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 description = "Rust implementation of the 'Async Hyper-Graph Cellular Automata' computational model."
 license = "MIT"
@@ -14,7 +14,7 @@ itertools = "0.13.0"
 kdam = "0.5.2"
 rand = "0.8.5"
 rayon = "1.10.0"
-tokio = { version = "1.40.0", features = ["full"] }
+tokio = { version = "1.41.0", features = ["full"] }
 wgpu = "22.1.0"
 
 macroquad = { version = "0.4.13", optional = true }

@@ -21,5 +21,6 @@ where
     fn node_neighbors(&self) -> &HashMap<usize, Vec<usize>>;
 
     fn update_nodes(&mut self, new_nodes: Vec<N>);
+    fn update_nodes_mut(&mut self, mutator: impl FnMut(&mut Vec<N>));
     fn update_edges(&mut self, new_edges: HashMap<usize, HyperEdge<E>>);
 }

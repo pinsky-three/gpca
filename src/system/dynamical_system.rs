@@ -73,20 +73,21 @@ where
         self.space = space
     }
 
+    pub fn update_space(&mut self, mutator: impl FnMut(&mut Vec<N>)) {
+        self.space.update_nodes_mut(mutator);
+    }
+
     pub fn compute_sync(&mut self) {
         let mut new_nodes = self.space.nodes().clone();
 
         new_nodes.par_iter_mut().enumerate().for_each(|(i, node)| {
             let neighbors = self.space.node_neighbors().get(&i).unwrap().to_owned();
 
-            // println!("i: {}, neighbors: {:?}", i, neighbors);
-
             let neighbor_nodes = neighbors
                 .iter()
                 .map(|i| self.space.nodes()[*i].clone())
                 .collect::<Vec<N>>();
 
-            // *node = node.interact(&neighbor_nodes, vec![]);
             *node = self.dynamic.update(node, &neighbor_nodes, vec![]);
         });
 

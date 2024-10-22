@@ -95,6 +95,10 @@ where
     fn update_edges(&mut self, new_edges: HashMap<usize, HyperEdge<E>>) {
         self.edges = new_edges;
     }
+
+    fn update_nodes_mut(&mut self, mut mutator: impl FnMut(&mut Vec<N>)) {
+        mutator(&mut self.nodes);
+    }
 }
 
 impl<N, E, P> HyperGraphHeap<N, E, P>
