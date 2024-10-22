@@ -65,6 +65,14 @@ where
         format!("{:?}", self)
     }
 
+    pub fn set_dynamic(&mut self, dynamic: Box<D>) {
+        self.dynamic = dynamic
+    }
+
+    pub fn set_space(&mut self, space: Box<S>) {
+        self.space = space
+    }
+
     pub fn compute_sync(&mut self) {
         let mut new_nodes = self.space.nodes().clone();
 
