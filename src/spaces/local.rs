@@ -7,6 +7,7 @@ where
     Self: Clone + Send + Sync + Hash + Eq + PartialEq,
 {
     fn state(&self) -> u32;
+    fn set_state(&mut self, state: u32);
     fn from_state(state: u32) -> Self;
 }
 

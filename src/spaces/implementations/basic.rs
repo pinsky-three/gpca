@@ -27,6 +27,10 @@ impl Stateable for DiscreteState {
         self.state
     }
 
+    fn set_state(&mut self, state: u32) {
+        self.state = state;
+    }
+
     fn from_state(state: u32) -> Self {
         Self { state }
     }
