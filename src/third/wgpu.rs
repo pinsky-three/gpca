@@ -77,8 +77,8 @@ where
     output
 }
 
-pub fn create_gpu_device() -> GpuDevice {
-    let (device, queue) = futures::executor::block_on(create_device_queue());
+pub async fn create_gpu_device() -> GpuDevice {
+    let (device, queue) = create_device_queue().await;
     GpuDevice { device, queue }
 }
 

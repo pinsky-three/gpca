@@ -103,7 +103,7 @@ where
     E: Clone + Sync + Send + Eq + PartialEq + Hash + Sized + Debug,
     Self: LatticeComputable<N, E>,
 {
-    pub fn compute_sync_wgpu(&mut self, device: &GpuDevice) {
+    pub async fn compute_sync_wgpu(&mut self, device: &GpuDevice) {
         let shape = self.shape();
 
         if shape.len() != 2 {
@@ -121,7 +121,7 @@ where
 
         let kernel = accumulation();
 
-        let output = futures::executor::block_on(wgpu::run(
+        let output = wgpu::run(
             device,
             &Image {
                 data: mem,
@@ -131,7 +131,8 @@ where
             &kernel,
             self.update_wgsl_code(),
             self.deref(),
-        ));
+        )
+        .await;
 
         let res_data_len = output.data.len();
         let mut nodes = self.space.nodes().to_owned();

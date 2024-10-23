@@ -14,6 +14,12 @@
 - **Visualization**: Easily create images of simulation states, with customizable color gradients and mapping.
 - **2D and 3D support** (upcoming): Current support for 2D automata with a planned extension to 3D models.
 
+## Example
+
+```shell
+cargo run --example latest --features=rand
+```
+
 ## Installation
 
 To use **GPCA** in your Rust project, add the following dependency to your `Cargo.toml`:

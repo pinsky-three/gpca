@@ -1,18 +1,14 @@
 [package]
 name = "gpca"
-version = "0.1.6"
+version = "0.2.0"
 edition = "2021"
 description = "Rust implementation of the 'Async Hyper-Graph Cellular Automata' computational model."
 license = "MIT"
 
 [dependencies]
 bytemuck = "1.19.0"
-colorous = "1.0.14"
-futures = "0.3.31"
 image = "0.25.4"
 itertools = "0.13.0"
-kdam = "0.5.2"
-rand = "0.8.5"
 rayon = "1.10.0"
 tokio = { version = "1.41.0", features = ["full"] }
 wgpu = "22.1.0"
@@ -20,9 +16,11 @@ wgpu = "22.1.0"
 macroquad = { version = "0.4.13", optional = true }
 egui-macroquad = { version = "0.15.0", optional = true }
 fdg-sim = { version = "0.9.1", optional = true }
+rand = { version = "0.8.5", optional = true }
 
 [features]
 fdg = ["dep:macroquad", "dep:egui-macroquad", "dep:fdg-sim"]
+rand = ["dep:rand"]
 
 [[example]]
 name = "basic"
@@ -31,3 +29,7 @@ required-features = ["fdg"]
 [[example]]
 name = "visualization"
 required-features = ["fdg"]
+
+[[example]]
+name = "latest"
+required-features = ["rand"]
